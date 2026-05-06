@@ -5,7 +5,8 @@ import LoaderClock from './components/LoaderClock';
 import { GraphData, GraphNode, fetchAmplifications } from './services/bsky';
 import { analyzeNetwork } from './services/gemini';
 import { calculateCentrality } from './utils/analysis';
-import { LucideIcon } from 'lucide-react';
+import { runForensics, ForensicsResults } from './utils/forensics';
+import { LucideIcon, Share2, Users, Radio, Link as LinkIcon, Cpu } from 'lucide-react';
 
 export default function App() {
   const [handleInput, setHandleInput] = useState('niusde.bsky.social');
@@ -24,6 +25,7 @@ export default function App() {
   const [bridgeNodes, setBridgeNodes] = useState<string[]>([]);
   const [timelineRange, setTimelineRange] = useState<{ min: number; max: number } | null>(null);
   const [blockedNodeIds, setBlockedNodeIds] = useState<string[]>([]);
+  const [forensics, setForensics] = useState<ForensicsResults | null>(null);
 
   const runAnalysis = async (handleToRun: string) => {
     if (!handleToRun.trim()) return;
@@ -52,6 +54,20 @@ export default function App() {
       // Run Centrality Analysis
       const results = calculateCentrality(data);
       setBridgeNodes(results.bridgeNodes);
+      
+      // Run Forensics
+      const forensicResults = runForensics(data);
+      setForensics(forensicResults);
+
+      // Flag nodes in state
+      const forensicNodes = data.nodes.map(n => ({
+        ...n,
+        isCoordinated: forensicResults.coordinatedNodeIds.includes(n.id),
+        isSockpuppet: forensicResults.sockpuppetGroups.some(g => g.includes(n.id))
+      }));
+      
+      const enrichedData = { ...data, nodes: forensicNodes };
+      setGraphData(enrichedData);
       
       // Run AI Analysis on top nodes
       const topNodes = [...data.nodes]
@@ -122,7 +138,7 @@ export default function App() {
       return nodeIds.has(s) && nodeIds.has(t);
     });
     return { nodes: filteredNodes, edges: filteredEdges };
-  }, [graphData, minWeight]);
+  }, [graphData, minWeight, blockedNodeIds]);
 
   // Calculate statistics for recommendations
   const getInsights = () => {
@@ -448,6 +464,60 @@ export default function App() {
                 {isLoading ? 'Analysiere Daten...' : 'Keine Multiplikatoren gefunden.'}
               </div>
             )}
+          </div>
+
+          {/* Forensics Highlights Card */}
+          <div className="bg-cyber-dark rounded-2xl border border-slate-800 p-4 md:p-5 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-2 opacity-5">
+               <Radio className="w-12 h-12 text-neon-green" />
+            </div>
+            <h2 className="text-xs font-bold text-neon-green uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Cpu className="w-3 h-3" /> Forensik-Scan
+            </h2>
+            
+            <div className="space-y-4">
+              {/* Synchronicity */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold">Koordination</span>
+                  <span className="text-[10px] text-neon-blue font-mono">{forensics?.coordinatedNodeIds.length || 0} Accounts</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-neon-blue shadow-[0_0_10px_#00f2ff]" 
+                    style={{ width: `${Math.min(100, (forensics?.coordinatedNodeIds.length || 0) * 10)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Top Sources */}
+              {forensics?.topLinks && forensics.topLinks.length > 0 && (
+                <div className="border-t border-slate-800 pt-3">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold mb-2 block">Top Quellen (Domains)</span>
+                  <div className="space-y-1.5">
+                    {forensics.topLinks.slice(0, 3).map((link, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-300 truncate max-w-[140px] flex items-center gap-1">
+                          <LinkIcon className="w-2.5 h-2.5 text-slate-500" /> {link.url}
+                        </span>
+                        <span className="text-neon-green font-mono">{link.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sockpuppets */}
+              {forensics?.sockpuppetGroups && forensics.sockpuppetGroups.length > 0 && (
+                <div className="border-t border-slate-800 pt-3">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold mb-2 block">Sockenpuppen-Cluster</span>
+                  <div className="flex items-center gap-2 text-xs text-neon-purple">
+                    <Users className="w-3 h-3" />
+                    <span>{forensics.sockpuppetGroups.length} Gruppen identifiziert</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Intervention Logic Card */}

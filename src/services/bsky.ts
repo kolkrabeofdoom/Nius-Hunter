@@ -13,6 +13,10 @@ export interface GraphNode extends d3.SimulationNodeDatum {
   isRoot?: boolean;
   createdAt: string; // ISO date
   isBotCandidate?: boolean;
+  repostTimes?: string[]; // Times this user reposted the target
+  links?: string[]; // Links found in bio
+  isCoordinated?: boolean; // Flagged by synchronicity detector
+  isSockpuppet?: boolean; // Flagged by metadata similarity
 }
 
 export interface GraphEdge extends d3.SimulationLinkDatum<GraphNode> {
@@ -44,6 +48,10 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
   const addNode = (profile: any, isRoot = false, defaultWeight = 1) => {
     if (!profile) return;
     if (!nodes.has(profile.did)) {
+      // Extract links from bio
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const bioLinks = profile.description?.match(urlRegex) || [];
+
       nodes.set(profile.did, {
         id: profile.did,
         handle: profile.handle,
@@ -54,7 +62,9 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
         isRoot,
         createdAt: profile.createdAt || new Date().toISOString(),
         isBotCandidate: (profile.handle.replace(/[^0-9]/g, "").length > 4) || 
-                         (profile.description?.toLowerCase().includes("bot") ?? false)
+                         (profile.description?.toLowerCase().includes("bot") ?? false),
+        repostTimes: [],
+        links: bioLinks,
       });
     } else if (isRoot) {
       nodes.get(profile.did)!.isRoot = true;
@@ -103,6 +113,14 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
             for (const reposter of reposters.data.repostedBy) {
               addNode(reposter, false, 5);
               addEdge(reposter.did, rootDid, 3);
+              
+              // Track repost time for synchronicity
+              const node = nodes.get(reposter.did);
+              if (node && (item.post as any).indexedAt) {
+                if (!node.repostTimes) node.repostTimes = [];
+                node.repostTimes.push((item.post as any).indexedAt);
+              }
+
               // Update edge timestamp if post is older
               const edgeId = `${reposter.did}->${rootDid}`;
               if (edges.has(edgeId)) {

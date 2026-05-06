@@ -201,6 +201,23 @@ export default function NetworkGraph({ data, onNodeClick, currentTime, bridgeNod
       .attr('fill', '#f59e0b')
       .attr('class', 'animate-pulse');
 
+    // Synchronicity icons (Police lights / Radio signal)
+    node.filter((d: any) => d.isCoordinated)
+      .append('circle')
+      .attr('r', d => Math.sqrt(d.weight) * 3 + 8)
+      .attr('fill', 'none')
+      .attr('stroke', '#ff0055')
+      .attr('stroke-width', 2)
+      .attr('class', 'animate-police-lights');
+      
+    // Sockpuppet icons
+    node.filter((d: any) => d.isSockpuppet)
+      .append('text')
+      .text('🎭')
+      .attr('x', 10)
+      .attr('y', -10)
+      .attr('font-size', '12px');
+
     // Entrance animation for very new nodes
     node.filter((d: any) => {
       if (!currentTime) return false;

@@ -81,3 +81,14 @@ input[type="range"]::-webkit-slider-thumb {
   stroke-dasharray: 4, 6;
   animation: dash 1s linear infinite;
 }
+
+/* Police lights effect for coordinated nodes */
+@keyframes police-lights {
+  0% { stroke: #ff0055; opacity: 1; transform: scale(1); }
+  50% { stroke: #00f2ff; opacity: 0.5; transform: scale(1.1); }
+  100% { stroke: #ff0055; opacity: 1; transform: scale(1); }
+}
+
+.animate-police-lights {
+  animation: police-lights 0.5s ease-in-out infinite;
+}
