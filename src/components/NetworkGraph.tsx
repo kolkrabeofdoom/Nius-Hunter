@@ -51,6 +51,47 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
       .attr('stroke-opacity', 0.6)
       .attr('stroke-width', d => Math.sqrt(d.weight));
 
+    let focusId: string | null = null;
+    let selectedId: string | null = null;
+
+    const isConnected = (a: any, b: any) => {
+      return edges.some(e => 
+        (e.source.id === a.id && e.target.id === b.id) ||
+        (e.source.id === b.id && e.target.id === a.id)
+      ) || a.id === b.id;
+    };
+
+    const updateHighlights = () => {
+      const targetId = focusId || selectedId;
+      
+      node.selectAll('circle')
+        .attr('opacity', (d: any) => {
+          if (!targetId) return 1;
+          const targetNode = nodes.find(n => n.id === targetId);
+          return (targetNode && isConnected(d, targetNode)) ? 1 : 0.15;
+        })
+        .attr('stroke', (d: any) => d.id === selectedId ? '#22c55e' : '#fff')
+        .attr('stroke-width', (d: any) => d.id === selectedId ? 3 : 1.5);
+
+      node.selectAll('text')
+        .attr('opacity', (d: any) => {
+          if (!targetId) return 1;
+          const targetNode = nodes.find(n => n.id === targetId);
+          return (targetNode && isConnected(d, targetNode)) ? 1 : 0.15;
+        })
+        .attr('font-weight', (d: any) => d.id === selectedId ? 'bold' : 'normal');
+
+      link
+        .attr('stroke-opacity', (e: any) => {
+          if (!targetId) return 0.6;
+          return (e.source.id === targetId || e.target.id === targetId) ? 0.9 : 0.05;
+        })
+        .attr('stroke', (e: any) => {
+          if (!targetId) return '#cbd5e1';
+          return (e.source.id === targetId || e.target.id === targetId) ? '#3b82f6' : '#cbd5e1';
+        });
+    };
+
     // Draw nodes
     const node = g.append('g')
       .selectAll('g')
@@ -58,8 +99,20 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
       .join('g')
       .attr('cursor', 'pointer')
       .call(drag(simulation) as any)
-      .on('click', (event, d) => {
-        if (!event.defaultPrevented) onNodeClick(d as GraphNode);
+      .on('mouseover', (event, d: any) => {
+        focusId = d.id;
+        updateHighlights();
+      })
+      .on('mouseout', () => {
+        focusId = null;
+        updateHighlights();
+      })
+      .on('click', (event, d: any) => {
+        if (!event.defaultPrevented) {
+          selectedId = d.id;
+          updateHighlights();
+          onNodeClickRef.current(d as GraphNode);
+        }
       });
 
     // Node circles
@@ -106,7 +159,13 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
       window.removeEventListener('resize', handleResize);
       simulation.stop();
     };
-  }, [data, onNodeClick]);
+  }, [data]);
+
+  // Use a ref for onNodeClick so we don't need it in deps
+  const onNodeClickRef = useRef(onNodeClick);
+  useEffect(() => {
+    onNodeClickRef.current = onNodeClick;
+  }, [onNodeClick]);
 
   // Drag functionality
   function drag(simulation: d3.Simulation<GraphNode, undefined>) {

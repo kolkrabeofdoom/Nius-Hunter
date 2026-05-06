@@ -32,7 +32,7 @@ export async function resolveHandle(handle: string) {
   }
 }
 
-export async function fetchAmplifications(did: string, depth: number = 1, onProgress?: (msg: string) => void): Promise<GraphData> {
+export async function fetchAmplifications(did: string, deepScan: boolean = false, onProgress?: (msg: string) => void): Promise<GraphData> {
   const nodes = new Map<string, GraphNode>();
   const edges = new Map<string, GraphEdge>();
 
@@ -74,7 +74,7 @@ export async function fetchAmplifications(did: string, depth: number = 1, onProg
     onProgress?.("Lade Follower des Accounts...");
     try {
       // First, get followers of the central account
-      const followersRes = await agent.api.app.bsky.graph.getFollowers({ actor: rootDid, limit: 50 });
+      const followersRes = await agent.api.app.bsky.graph.getFollowers({ actor: rootDid, limit: deepScan ? 150 : 50 });
       for (const f of followersRes.data.followers) {
         addNode(f, false, 2);
         addEdge(f.did, rootDid, 1);
@@ -86,11 +86,11 @@ export async function fetchAmplifications(did: string, depth: number = 1, onProg
     onProgress?.("Suche aktive Multiplikatoren (Reposts)...");
     try {
       // Enrich with people actively amplifying them to ensure we get the strongest nodes
-      const rawFeed = await agent.getAuthorFeed({ actor: rootDid, limit: 15, filter: 'posts_no_replies' });
+      const rawFeed = await agent.getAuthorFeed({ actor: rootDid, limit: deepScan ? 50 : 15, filter: 'posts_no_replies' });
       for (const item of rawFeed.data.feed) {
         if ((item.post as any).author?.did === rootDid) {
           try {
-            const reposters = await agent.api.app.bsky.feed.getRepostedBy({ uri: item.post.uri, limit: 15 });
+            const reposters = await agent.api.app.bsky.feed.getRepostedBy({ uri: item.post.uri, limit: deepScan ? 50 : 15 });
             for (const reposter of reposters.data.repostedBy) {
               addNode(reposter, false, 5);
               addEdge(reposter.did, rootDid, 3);
@@ -115,7 +115,7 @@ export async function fetchAmplifications(did: string, depth: number = 1, onProg
       const chunk = allDids.slice(i, i + chunkSize);
       await Promise.all(chunk.map(async (targetDid) => {
         try {
-          const follows = await agent.api.app.bsky.graph.getFollows({ actor: targetDid, limit: 100 });
+          const follows = await agent.api.app.bsky.graph.getFollows({ actor: targetDid, limit: deepScan ? 200 : 80 });
           for (const follow of follows.data.follows) {
             if (nodes.has(follow.did) && follow.did !== rootDid && follow.did !== targetDid) {
               addEdge(targetDid, follow.did, 2); // Internal network edge!
