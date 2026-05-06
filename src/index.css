@@ -1,1 +1,83 @@
 @import "tailwindcss";
+
+:root {
+  --neon-blue: #00f2ff;
+  --neon-green: #00ff9f;
+  --neon-purple: #bc13fe;
+  --glitch-rose: #ff0055;
+  --cyber-black: #020617;
+  --cyber-dark: #0f172a;
+}
+
+@theme {
+  --color-neon-blue: var(--neon-blue);
+  --color-neon-green: var(--neon-green);
+  --color-neon-purple: var(--neon-purple);
+  --color-glitch-rose: var(--glitch-rose);
+  --color-cyber-black: var(--cyber-black);
+  --color-cyber-dark: var(--cyber-dark);
+}
+
+body {
+  background-color: var(--cyber-black);
+  color: #e2e8f0;
+  overflow: hidden;
+}
+
+/* Scanline Effect */
+.scanline {
+  width: 100%;
+  height: 100px;
+  z-index: 99;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 242, 255, 0.05) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  opacity: 0.1;
+  position: absolute;
+  bottom: 100%;
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scanline {
+  0% { bottom: 100%; }
+  100% { bottom: -100px; }
+}
+
+/* Glitch Animation */
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.animate-glitch {
+  animation: glitch 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+/* Custom range slider styling */
+input[type="range"] {
+  @apply appearance-none bg-slate-800 rounded-full h-1.5;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply appearance-none w-4 h-4 bg-neon-blue rounded-full cursor-pointer shadow-[0_0_10px_rgba(0,242,255,0.8)];
+}
+
+/* Data stream animation for edges */
+@keyframes dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.data-stream {
+  stroke-dasharray: 4, 6;
+  animation: dash 1s linear infinite;
+}

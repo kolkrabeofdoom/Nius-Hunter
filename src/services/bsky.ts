@@ -7,14 +7,19 @@ export interface GraphNode extends d3.SimulationNodeDatum {
   handle: string;
   displayName?: string;
   avatar?: string;
+  description?: string;
   weight: number;
+  toxicity?: number;
   isRoot?: boolean;
+  createdAt: string; // ISO date
+  isBotCandidate?: boolean;
 }
 
 export interface GraphEdge extends d3.SimulationLinkDatum<GraphNode> {
   source: string | GraphNode;
   target: string | GraphNode;
   weight: number;
+  createdAt: string; // ISO date
 }
 
 export interface GraphData {
@@ -44,8 +49,12 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
         handle: profile.handle,
         displayName: profile.displayName,
         avatar: profile.avatar,
+        description: profile.description,
         weight: defaultWeight,
-        isRoot
+        isRoot,
+        createdAt: profile.createdAt || new Date().toISOString(),
+        isBotCandidate: (profile.handle.replace(/[^0-9]/g, "").length > 4) || 
+                         (profile.description?.toLowerCase().includes("bot") ?? false)
       });
     } else if (isRoot) {
       nodes.get(profile.did)!.isRoot = true;
@@ -58,7 +67,7 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
     if (edges.has(edgeId)) {
       edges.get(edgeId)!.weight += weight;
     } else {
-      edges.set(edgeId, { source: sourceId, target: targetId, weight });
+      edges.set(edgeId, { source: sourceId, target: targetId, weight, createdAt: new Date().toISOString() });
     }
     // Boost node weights slightly
     if (nodes.has(sourceId)) nodes.get(sourceId)!.weight += 0.2 * weight;
@@ -94,6 +103,11 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
             for (const reposter of reposters.data.repostedBy) {
               addNode(reposter, false, 5);
               addEdge(reposter.did, rootDid, 3);
+              // Update edge timestamp if post is older
+              const edgeId = `${reposter.did}->${rootDid}`;
+              if (edges.has(edgeId)) {
+                edges.get(edgeId)!.createdAt = (item.post as any).indexedAt || edges.get(edgeId)!.createdAt;
+              }
             }
           } catch (e) {
             // Ignore if error on specific post

@@ -5,9 +5,11 @@ import { GraphData, GraphNode, GraphEdge } from '../services/bsky';
 interface NetworkGraphProps {
   data: GraphData;
   onNodeClick: (node: GraphNode) => void;
+  currentTime?: string; // ISO date cutoff
+  bridgeNodes?: string[]; // IDs of bridge nodes
 }
 
-export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
+export default function NetworkGraph({ data, onNodeClick, currentTime, bridgeNodes = [] }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,10 +33,41 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
       .on('mouseup.zoom', function() { d3.select(this).style('cursor', 'grab'); });
 
     const g = svg.append('g');
+    
+    // Add glow filter
+    const defs = svg.append('defs');
+    const filter = defs.append('filter')
+      .attr('id', 'glow')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+      .attr('width', '200%')
+      .attr('height', '200%');
+    
+    filter.append('feGaussianBlur')
+      .attr('stdDeviation', '3')
+      .attr('result', 'blur');
+    
+    filter.append('feComposite')
+      .attr('in', 'SourceGraphic')
+      .attr('in2', 'blur')
+      .attr('operator', 'over');
 
-    // Create a copy of the data as D3 will mutate it
-    const nodes = data.nodes.map(d => ({ ...d }));
-    const edges = data.edges.map(d => ({ ...d }));
+    // Filter nodes and edges based on currentTime
+    const filteredNodes = currentTime 
+      ? data.nodes.filter(n => n.createdAt <= currentTime)
+      : data.nodes;
+      
+    const nodeIds = new Set(filteredNodes.map(n => n.id));
+    
+    const filteredEdges = data.edges.filter(e => {
+      const sId = typeof e.source === 'string' ? e.source : (e.source as any).id;
+      const tId = typeof e.target === 'string' ? e.target : (e.target as any).id;
+      const timeOk = currentTime ? e.createdAt <= currentTime : true;
+      return nodeIds.has(sId) && nodeIds.has(tId) && timeOk;
+    });
+
+    const nodes = filteredNodes.map(d => ({ ...d }));
+    const edges = filteredEdges.map(d => ({ ...d }));
 
     const simulation = d3.forceSimulation(nodes)
       .force('link', d3.forceLink(edges).id((d: any) => d.id).distance(100).strength(0.5))
@@ -47,18 +80,21 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
       .selectAll('line')
       .data(edges)
       .join('line')
-      .attr('stroke', '#cbd5e1')
-      .attr('stroke-opacity', 0.6)
+      .attr('stroke', '#00f2ff')
+      .attr('class', 'data-stream')
+      .attr('stroke-opacity', 0.4)
       .attr('stroke-width', d => Math.sqrt(d.weight));
 
     let focusId: string | null = null;
     let selectedId: string | null = null;
 
     const isConnected = (a: any, b: any) => {
-      return edges.some(e => 
-        (e.source.id === a.id && e.target.id === b.id) ||
-        (e.source.id === b.id && e.target.id === a.id)
-      ) || a.id === b.id;
+      return edges.some(e => {
+        const sId = typeof e.source === 'string' ? e.source : (e.source as any).id;
+        const tId = typeof e.target === 'string' ? e.target : (e.target as any).id;
+        return (sId === a.id && tId === b.id) ||
+               (sId === b.id && tId === a.id);
+      }) || a.id === b.id;
     };
 
     const updateHighlights = () => {
@@ -118,7 +154,21 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
     // Node circles
     node.append('circle')
       .attr('r', d => Math.sqrt(d.weight) * 3 + 4)
-      .attr('fill', d => d.isRoot ? '#3b82f6' : '#94a3b8')
+      .attr('fill', d => {
+        if (d.isRoot) return '#00f2ff';
+        if (d.isBotCandidate) return '#bc13fe';
+        if (d.toxicity && d.toxicity > 50) {
+          // Interpolate between slate and rose
+          const t = (d.toxicity - 50) / 50;
+          return d3.interpolateRgb('#1e293b', '#ff0055')(t);
+        }
+        return '#1e293b';
+      })
+      .attr('filter', d => {
+        if (d.isRoot) return 'url(#glow)';
+        if (d.toxicity && d.toxicity > 70) return 'url(#glow)';
+        return null;
+      })
       .attr('stroke', '#fff')
       .attr('stroke-width', 1.5);
 
@@ -129,8 +179,40 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
       .attr('y', 3)
       .attr('font-size', '10px')
       .attr('font-family', 'sans-serif')
-      .attr('fill', '#334155')
-      .style('text-shadow', '0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff');
+      .attr('fill', '#00f2ff')
+      .style('text-shadow', '0 0 10px rgba(0,242,255,0.5)');
+      
+    // Bot icons (mechanical/glitch)
+    node.filter((d: any) => d.isBotCandidate)
+      .append('text')
+      .text('🤖')
+      .attr('x', -10)
+      .attr('y', 15)
+      .attr('font-size', '10px')
+      .attr('class', 'animate-glitch');
+      
+    // Bridge icons (lightning bolts)
+    node.filter((d: any) => bridgeNodes.includes(d.id))
+      .append('text')
+      .text('⚡')
+      .attr('x', -12)
+      .attr('y', -12)
+      .attr('font-size', '14px')
+      .attr('fill', '#f59e0b')
+      .attr('class', 'animate-pulse');
+
+    // Entrance animation for very new nodes
+    node.filter((d: any) => {
+      if (!currentTime) return false;
+      const nodeTime = new Date(d.createdAt).getTime();
+      const currTime = new Date(currentTime).getTime();
+      return currTime - nodeTime < 60000 * 5; // New in last 5 mins
+    })
+    .selectAll('circle')
+    .attr('r', 0)
+    .transition()
+    .duration(500)
+    .attr('r', (d: any) => Math.sqrt(d.weight) * 3 + 4);
 
     simulation.on('tick', () => {
       link
@@ -159,7 +241,7 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
       window.removeEventListener('resize', handleResize);
       simulation.stop();
     };
-  }, [data]);
+  }, [data, currentTime, bridgeNodes]);
 
   // Use a ref for onNodeClick so we don't need it in deps
   const onNodeClickRef = useRef(onNodeClick);
@@ -193,6 +275,8 @@ export default function NetworkGraph({ data, onNodeClick }: NetworkGraphProps) {
   }
 
   return (
-    <div ref={containerRef} className="w-full h-full bg-transparent relative overflow-hidden" />
+    <div ref={containerRef} className="w-full h-full bg-cyber-black relative overflow-hidden">
+      <div className="scanline"></div>
+    </div>
   );
 }
