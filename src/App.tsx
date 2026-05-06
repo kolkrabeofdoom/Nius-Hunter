@@ -6,7 +6,7 @@ import { GraphData, GraphNode, fetchAmplifications, fetchRecentPosts } from './s
 import { analyzeNetwork, analyzeDeepNarrative, DeepAnalysisResult } from './services/gemini';
 import { calculateCentrality } from './utils/analysis';
 import { runForensics, ForensicsResults } from './utils/forensics';
-import { LucideIcon, Share2, Users, Radio, Link as LinkIcon, Cpu, MessageSquare, Terminal, Send, X } from 'lucide-react';
+import { LucideIcon, Share2, Users, Radio, Link as LinkIcon, Cpu, MessageSquare, Terminal, Send, X, HelpCircle, Info } from 'lucide-react';
 import { askSleuthAssistant } from './services/gemini';
 
 export default function App() {
@@ -35,6 +35,42 @@ export default function App() {
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'model'; parts: { text: string }[] }[]>([]);
   const [isChatTyping, setIsChatTyping] = useState(false);
+
+  // Help State
+  const [activeHelp, setActiveHelp] = useState<string | null>(null);
+
+  const helpContent: Record<string, { title: string; body: string; impact: string }> = {
+    multipliers: {
+      title: "Top Multiplikatoren",
+      body: "Diese Accounts sind die 'Megafone' des Netzwerks. Sie haben die höchste Gewichtung basierend auf der Häufigkeit und Geschwindigkeit, mit der sie Inhalte des Ziel-Accounts teilen.",
+      impact: "Hoher Einfluss auf die Sichtbarkeit in den Feeds unbeteiligter Dritter."
+    },
+    forensics: {
+      title: "Forensik-Scan Metriken",
+      body: "Eine mathematische Analyse der Netzwerkstruktur. Wir messen hier Koordination (zeitgleiches Posten), Bot-Wahrscheinlichkeit und die algorithmische Dichte des Graphen.",
+      impact: "Dient zur Identifizierung von künstlich aufgeblähter Reichweite (Astroturfing)."
+    },
+    bot_density: {
+      title: "Bot-Dichte",
+      body: "Analyse von Account-Metadaten: Alter des Profils, Handle-Struktur (Zufallszahlen) und Interaktionsfrequenz. Ein hoher Wert deutet auf eine automatisierte Kampagne hin.",
+      impact: "Manipulation der 'Trending'-Algorithmen durch Masse statt Klasse."
+    },
+    stability: {
+      title: "Netz-Stabilität (Density)",
+      body: "Misst, wie stark die Follower untereinander vernetzt sind. In einer stabilen Echokammer folgen sich fast alle gegenseitig, was Informationen isoliert und radikalisiert.",
+      impact: "Erschwert den Einbruch von Fakten von außerhalb des Netzwerks."
+    },
+    toxicity: {
+      title: "Ø Toxizität",
+      body: "KI-gestützte Bewertung der Sprache. Wir suchen nach aggressiven Narrativen, Entmenschlichung oder gezielter Desinformation.",
+      impact: "Führt zu einer Vergiftung des öffentlichen Diskurses und Einschüchterung von Kritikern."
+    },
+    intervention: {
+      title: "Gegenmaßnahmen & Simulation",
+      body: "Hier berechnen wir den 'Knock-out' Effekt. Wenn du einen strategischen Knotenpunkt (Gateway) blockierst, verliert das restliche Netzwerk massiv an Kohärenz.",
+      impact: "Effektivste Methode zur Zerschlagung von Desinformations-Clustern."
+    }
+  };
 
   const runAnalysis = async (handleToRun: string) => {
     if (!handleToRun.trim()) return;
@@ -531,8 +567,13 @@ export default function App() {
                 <div className="absolute top-0 right-0 p-2 opacity-5">
                    <Zap className="w-12 h-12 text-neon-blue" />
                 </div>
-                <h2 className="text-xs font-bold text-neon-blue uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Zap className="w-3 h-3" /> Top Multiplikatoren
+                <h2 className="text-xs font-bold text-neon-blue uppercase tracking-widest mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-3 h-3" /> Top Multiplikatoren
+                  </div>
+                  <button onClick={() => setActiveHelp('multipliers')} className="text-slate-600 hover:text-neon-blue transition-colors">
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </h2>
             {topAmplifiers && topAmplifiers.length > 0 ? (
               <div className="space-y-4">
@@ -588,8 +629,13 @@ export default function App() {
             <div className="absolute top-0 right-0 p-2 opacity-5">
                <Radio className="w-12 h-12 text-neon-green" />
             </div>
-            <h2 className="text-xs font-bold text-neon-green uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Cpu className="w-3 h-3" /> Forensik-Scan
+            <h2 className="text-xs font-bold text-neon-green uppercase tracking-widest mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Cpu className="w-3 h-3" /> Forensik-Scan
+              </div>
+              <button onClick={() => setActiveHelp('forensics')} className="text-slate-600 hover:text-neon-green transition-colors">
+                <HelpCircle className="w-3.5 h-3.5" />
+              </button>
             </h2>
             
             <div className="space-y-4">
@@ -607,18 +653,23 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Advanced Network Stats */}
-              <div className="grid grid-cols-2 gap-3 border-t border-slate-800 pt-3">
-                 <div>
-                    <span className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Bot-Dichte</span>
+              <div className="grid grid-cols-2 gap-3 border-t border-slate-800 pt-3 relative">
+                 <div className="group cursor-help" onClick={() => setActiveHelp('bot_density')}>
+                    <span className="text-[9px] text-slate-500 uppercase font-bold flex items-center gap-1 mb-1">
+                      Bot-Dichte <Info className="w-2 h-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </span>
                     <div className="text-xs font-mono text-neon-purple">{forensics?.botDensity.toFixed(1)}%</div>
                  </div>
-                 <div>
-                    <span className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Netz-Stabilität</span>
+                 <div className="group cursor-help" onClick={() => setActiveHelp('stability')}>
+                    <span className="text-[9px] text-slate-500 uppercase font-bold flex items-center gap-1 mb-1">
+                      Netz-Stabilität <Info className="w-2 h-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </span>
                     <div className="text-xs font-mono text-neon-green">{forensics?.networkDensity.toFixed(2)}%</div>
                  </div>
-                 <div>
-                    <span className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Ø Toxizität</span>
+                 <div className="group cursor-help" onClick={() => setActiveHelp('toxicity')}>
+                    <span className="text-[9px] text-slate-500 uppercase font-bold flex items-center gap-1 mb-1">
+                      Ø Toxizität <Info className="w-2 h-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </span>
                     <div className={`text-xs font-mono ${forensics && forensics.avgToxicity > 40 ? 'text-glitch-rose' : 'text-white'}`}>
                        {forensics?.avgToxicity.toFixed(0)}%
                     </div>
@@ -670,6 +721,9 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 text-glitch-rose" />
                 <h2 className="text-xs font-bold text-glitch-rose uppercase tracking-widest">Gegenmaßnahmen</h2>
+                <button onClick={() => setActiveHelp('intervention')} className="text-slate-700 hover:text-glitch-rose transition-colors">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
               </div>
               {influenceLost > 0 && (
                 <span className="text-[10px] font-black bg-glitch-rose text-white px-2 py-0.5 rounded animate-pulse">
@@ -853,6 +907,48 @@ export default function App() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Forensic Help Overlay */}
+      {activeHelp && helpContent[activeHelp] && (
+        <div className="fixed inset-0 bg-cyber-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-cyber-dark border border-slate-800 w-full max-w-md rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-neon-blue via-neon-purple to-glitch-rose"></div>
+             
+             <button 
+               onClick={() => setActiveHelp(null)}
+               className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors"
+             >
+               <X className="w-6 h-6" />
+             </button>
+
+             <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center">
+                   <Info className="w-6 h-6 text-neon-blue" />
+                </div>
+                <h3 className="text-xl font-bold text-white tracking-tight">{helpContent[activeHelp].title}</h3>
+             </div>
+
+             <div className="space-y-6">
+                <div>
+                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Definition & Analyse</label>
+                   <p className="text-slate-300 leading-relaxed text-sm">{helpContent[activeHelp].body}</p>
+                </div>
+
+                <div className="bg-slate-900/50 rounded-2xl p-4 border border-slate-800">
+                   <label className="text-[10px] font-black text-neon-purple uppercase tracking-widest block mb-2">Forensischer Impact</label>
+                   <p className="text-xs text-slate-400 italic">"{helpContent[activeHelp].impact}"</p>
+                </div>
+
+                <button 
+                  onClick={() => setActiveHelp(null)}
+                  className="w-full py-3 bg-white text-cyber-black rounded-xl text-xs font-black hover:bg-neon-blue transition-all uppercase tracking-widest"
+                >
+                  VERSTANDEN
+                </button>
+             </div>
+          </div>
         </div>
       )}
     </div>
