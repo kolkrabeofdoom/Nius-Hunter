@@ -172,3 +172,13 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
     throw err;
   }
 }
+
+export async function fetchRecentPosts(actor: string, limit: number = 10) {
+  try {
+    const { data } = await agent.getAuthorFeed({ actor, limit, filter: 'posts_no_replies' });
+    return data.feed.map(item => item.post.record as any).map(r => r.text).filter(Boolean);
+  } catch (err) {
+    console.warn(`Could not fetch posts for ${actor}`, err);
+    return [];
+  }
+}

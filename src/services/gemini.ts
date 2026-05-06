@@ -69,3 +69,55 @@ export async function analyzeNetwork(rootHandle: string, topNodes: any[]): Promi
     return { summary: "Verbindung zum Analyse-Modul unterbrochen. (Netzwerkfehler)", toxicNodes: {} };
   }
 }
+
+export interface DeepAnalysisResult {
+  talkingPoints: string[];
+  intent: string;
+  threatLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
+export async function analyzeDeepNarrative(rootHandle: string, nodeContent: { handle: string; posts: string[] }[]): Promise<DeepAnalysisResult> {
+  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string) || "";
+  if (!apiKey) throw new Error("API Key missing");
+
+  const contentStr = nodeContent.map(nc => `Account: @${nc.handle}\nPosts:\n${nc.posts.join('\n- ')}`).join('\n\n---\n\n');
+
+  const prompt = `
+    Analysiere die folgenden Social-Media-Inhalte aus einem Netzwerk, das @${rootHandle} verstärkt.
+    Hier sind die aktuellsten Posts der einflussreichsten Multiplikatoren:
+    ${contentStr}
+
+    Deine Aufgaben:
+    1. Identifiziere die 3-5 wichtigsten "Talking Points" (Kernbotschaften), die in diesem Netzwerk koordiniert verbreitet werden.
+    2. Bestimme die übergeordnete Absicht (Intent) dieser Operation (z.B. Diskreditierung, Mobilisierung, Ablenkung).
+    3. Bewerte das Bedrohungspotenzial (Threat Level: LOW, MEDIUM, HIGH, CRITICAL) basierend auf Radikalisierung und Reichweite.
+
+    Antworte EXKLUSIV im JSON-Format:
+    {
+      "talkingPoints": ["Punkt 1", "Punkt 2", ...],
+      "intent": "Beschreibung des Intents...",
+      "threatLevel": "HIGH"
+    }
+    Sprache: Deutsch.
+  `;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    const result = await response.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    
+    return { talkingPoints: ["Analyse fehlgeschlagen"], intent: "Unbekannt", threatLevel: "LOW" };
+  } catch (err) {
+    console.error(err);
+    return { talkingPoints: ["Netzwerkfehler"], intent: "Fehler", threatLevel: "LOW" };
+  }
+}

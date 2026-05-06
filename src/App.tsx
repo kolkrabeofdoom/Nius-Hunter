@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Loader2, AlertCircle, RefreshCw, Zap, ShieldAlert, Ban, SlidersHorizontal, Download, Network } from 'lucide-react';
 import NetworkGraph from './components/NetworkGraph';
 import LoaderClock from './components/LoaderClock';
-import { GraphData, GraphNode, fetchAmplifications } from './services/bsky';
-import { analyzeNetwork } from './services/gemini';
+import { GraphData, GraphNode, fetchAmplifications, fetchRecentPosts } from './services/bsky';
+import { analyzeNetwork, analyzeDeepNarrative, DeepAnalysisResult } from './services/gemini';
 import { calculateCentrality } from './utils/analysis';
 import { runForensics, ForensicsResults } from './utils/forensics';
 import { LucideIcon, Share2, Users, Radio, Link as LinkIcon, Cpu } from 'lucide-react';
@@ -26,6 +26,8 @@ export default function App() {
   const [timelineRange, setTimelineRange] = useState<{ min: number; max: number } | null>(null);
   const [blockedNodeIds, setBlockedNodeIds] = useState<string[]>([]);
   const [forensics, setForensics] = useState<ForensicsResults | null>(null);
+  const [deepAnalysis, setDeepAnalysis] = useState<DeepAnalysisResult | null>(null);
+  const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
 
   const runAnalysis = async (handleToRun: string) => {
     if (!handleToRun.trim()) return;
@@ -100,6 +102,27 @@ export default function App() {
           setIsAnalyzing(false);
         }
       }
+
+      // Feature 4: Deep Narrative Analysis (Deep Dive)
+      if (topNodes.length > 0) {
+        setIsDeepAnalyzing(true);
+        try {
+          // Fetch posts for top 5 nodes
+          const nodesWithPosts = await Promise.all(
+            topNodes.slice(0, 5).map(async (n) => ({
+              handle: n.handle,
+              posts: await fetchRecentPosts(n.id, 10)
+            }))
+          );
+          const deepRes = await analyzeDeepNarrative(handleToRun.trim(), nodesWithPosts);
+          setDeepAnalysis(deepRes);
+        } catch (err) {
+          console.error("Deep Analysis failed", err);
+        } finally {
+          setIsDeepAnalyzing(false);
+        }
+      }
+
     } catch (err: any) {
       setError(err.message || 'Fehler beim Laden des Netzwerks.');
     } finally {
@@ -183,6 +206,18 @@ export default function App() {
 
   return (
     <div className="h-screen w-full bg-cyber-black flex flex-col font-sans overflow-hidden text-slate-300">
+      {/* Dossier Print Header */}
+      <div className="dossier-print-header">
+         <div className="dossier-title">Forensisches Dossier</div>
+         <div className="dossier-metadata">
+            ID: NH-{Math.random().toString(36).substr(2, 9).toUpperCase()} | 
+            Target: @{handleInput} | 
+            Date: {new Date().toLocaleString()} | 
+            Classification: CONFIDENTIAL
+         </div>
+         <div className="dossier-watermark">CONFIDENTIAL</div>
+      </div>
+
       {/* Header Section */}
       <header className="h-20 bg-cyber-dark border-b border-slate-800 px-4 md:px-8 flex items-center justify-between shrink-0 z-20 shadow-lg relative">
         <div className="flex items-center gap-3">
@@ -571,17 +606,57 @@ export default function App() {
             </div>
 
             <button 
-              onClick={handleExportBlocklist}
-              disabled={!filteredGraphData || topAmplifiers?.length === 0}
-              className="mt-auto w-full py-3 bg-white text-cyber-black rounded-xl text-xs font-black hover:bg-neon-blue transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              onClick={() => window.print()}
+              disabled={!filteredGraphData || !deepAnalysis}
+              className="mt-auto w-full py-3 bg-neon-blue text-cyber-black rounded-xl text-xs font-black hover:bg-white transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,242,255,0.4)]"
             >
-              <Download className="w-4 h-4" /> EXPORT TARGETS (.txt)
+              <Download className="w-4 h-4" /> EXPORT DOSSIER (PDF)
             </button>
           </div>
             </>
           )}
         </aside>
       </main>
+
+      {/* Deep Analysis Highlights (if present) */}
+      {deepAnalysis && (
+        <div className="mx-4 md:mx-8 mb-6 bg-cyber-dark border border-neon-blue/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-neon-blue/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+           <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
+              <div className="shrink-0 flex flex-col items-center gap-2">
+                 <div className={`px-4 py-2 rounded-lg font-black text-xs tracking-tighter border ${
+                   deepAnalysis.threatLevel === 'CRITICAL' ? 'bg-glitch-rose/20 text-glitch-rose border-glitch-rose/40' :
+                   deepAnalysis.threatLevel === 'HIGH' ? 'bg-orange-500/20 text-orange-500 border-orange-500/40' :
+                   'bg-neon-green/20 text-neon-green border-neon-green/40'
+                 }`}>
+                   {deepAnalysis.threatLevel} THREAT
+                 </div>
+                 <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Classification</div>
+              </div>
+              
+              <div className="flex-1">
+                 <h3 className="text-xs font-bold text-neon-blue uppercase tracking-widest mb-4 flex items-center gap-2">
+                   <Share2 className="w-3 h-3" /> Strategische Narrative & Talking Points
+                 </h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {deepAnalysis.talkingPoints.map((tp, i) => (
+                      <div key={i} className="flex gap-3 items-start bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                         <div className="w-5 h-5 rounded bg-neon-blue/10 flex items-center justify-center shrink-0 text-[10px] font-bold text-neon-blue border border-neon-blue/20">
+                            {i+1}
+                         </div>
+                         <p className="text-sm text-slate-200 leading-tight">{tp}</p>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+
+              <div className="w-full md:w-64 bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                 <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Operationale Absicht</h4>
+                 <p className="text-sm text-slate-300 italic">"{deepAnalysis.intent}"</p>
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* Footer Status Bar */}
       <footer className="h-12 bg-cyber-dark border-t border-slate-800 px-4 md:px-8 flex items-center justify-between text-[10px] text-slate-500 font-medium uppercase tracking-wider shrink-0 overflow-x-auto whitespace-nowrap">
