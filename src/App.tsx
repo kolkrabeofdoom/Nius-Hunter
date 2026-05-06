@@ -114,8 +114,20 @@ export default function App() {
               posts: await fetchRecentPosts(n.id, 10)
             }))
           );
-          const deepRes = await analyzeDeepNarrative(handleToRun.trim(), nodesWithPosts);
-          setDeepAnalysis(deepRes);
+          
+          console.log(`Deep Analysis: Data for ${handleToRun}`, nodesWithPosts);
+          
+          if (nodesWithPosts.some(n => n.posts.length > 0)) {
+            const deepRes = await analyzeDeepNarrative(handleToRun.trim(), nodesWithPosts);
+            setDeepAnalysis(deepRes);
+          } else {
+            setDeepAnalysis({
+              talkingPoints: ["KEINE REZENTEN POSTS GEFUNDEN", "SYSTEM-SCAN UNVOLLSTÄNDIG"],
+              intent: "NICHT IDENTIFIZIERBAR",
+              threatLevel: "LOW"
+            });
+          }
+
         } catch (err) {
           console.error("Deep Analysis failed", err);
         } finally {
