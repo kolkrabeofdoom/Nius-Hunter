@@ -2,7 +2,6 @@
 
 **NIUS HUNTER** ist ein Analyse-Tool für Bluesky, das darauf spezialisiert ist, Kommunikationsnetzwerke und Verstärkungswege (Amplification) zu visualisieren. Es hilft dabei, Echokammern zu identifizieren und gibt konkrete Empfehlungen, wie diese Netzwerke durchtrennt werden können.
 
-![GHBanner](https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6)
 
 ## 🎯 Kernfunktionen
 
