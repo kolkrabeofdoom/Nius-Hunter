@@ -121,3 +121,65 @@ export async function analyzeDeepNarrative(rootHandle: string, nodeContent: { ha
     return { talkingPoints: ["Netzwerkfehler"], intent: "Fehler", threatLevel: "LOW" };
   }
 }
+export interface SleuthChatResponse {
+  answer: string;
+  focusNodeId?: string;
+}
+
+export async function askSleuthAssistant(
+  query: string, 
+  graphData: any, 
+  history: { role: 'user' | 'model'; parts: { text: string }[] }[]
+): Promise<SleuthChatResponse> {
+  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string) || "";
+  if (!apiKey) return { answer: "API Key missing." };
+
+  const nodesSummary = graphData.nodes.map((n: any) => 
+    `ID: ${n.id}, Handle: @${n.handle}, Weight: ${n.weight}, Toxicity: ${n.toxicity || 'N/A'}, Bot: ${n.isBotCandidate ? 'YES' : 'NO'}, Coordinated: ${n.isCoordinated ? 'YES' : 'NO'}`
+  ).join('\n');
+
+  const systemInstruction = `
+    Du bist der "Sleuth-Assistant", eine spezialisierte KI für digitale Forensik und Netzwerkanalyse.
+    Deine Aufgabe ist es, Fragen zu dem aktuell geladenen Bluesky-Netzwerk zu beantworten.
+    
+    Hier ist die Zusammenfassung des aktuellen Netzwerks:
+    ${nodesSummary.slice(0, 5000)} (Gekürzt für Kontext-Limit)
+    
+    Regeln:
+    1. Antworte düster, professionell und analytisch (Cyber-Sleuth Stil).
+    2. Wenn du einen spezifischen Account als Antwort identifizierst, gib seine ID (DID) im Feld "focusNodeId" zurück.
+    3. Nutze Forensik-Begriffe wie "Amplification Hub", "Coordination Cluster" oder "Bot Density".
+    4. Antworte EXKLUSIV im JSON-Format:
+    {
+      "answer": "Deine analytische Antwort hier...",
+      "focusNodeId": "did:plc:xxxx (Optional)"
+    }
+  `;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          { role: 'user', parts: [{ text: systemInstruction }] },
+          ...history,
+          { role: 'user', parts: [{ text: query }] }
+        ]
+      })
+    });
+
+    const result = await response.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    
+    return { answer: text || "Ich konnte keine Analyse erstellen." };
+  } catch (err) {
+    console.error(err);
+    return { answer: "Verbindungsfehler zum Cyber-Brain." };
+  }
+}

@@ -7,9 +7,10 @@ interface NetworkGraphProps {
   onNodeClick: (node: GraphNode) => void;
   currentTime?: string; // ISO date cutoff
   bridgeNodes?: string[]; // IDs of bridge nodes
+  selectedNodeId?: string | null;
 }
 
-export default function NetworkGraph({ data, onNodeClick, currentTime, bridgeNodes = [] }: NetworkGraphProps) {
+export default function NetworkGraph({ data, onNodeClick, currentTime, bridgeNodes = [], selectedNodeId }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -151,6 +152,32 @@ export default function NetworkGraph({ data, onNodeClick, currentTime, bridgeNod
         }
       });
 
+    // Handle External Selection Focus
+    const zoomBehavior = d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
+      g.attr('transform', event.transform);
+    });
+
+    svg.call(zoomBehavior);
+
+    if (selectedNodeId) {
+      const selectedNode = nodes.find(n => n.id === selectedNodeId);
+      if (selectedNode) {
+        const x = selectedNode.x || width / 2;
+        const y = selectedNode.y || height / 2;
+        const scale = 2;
+        
+        svg.transition()
+          .duration(750)
+          .call(
+            zoomBehavior.transform,
+            d3.zoomIdentity.translate(width / 2, height / 2).scale(scale).translate(-x, -y)
+          );
+          
+        selectedId = selectedNodeId;
+        updateHighlights();
+      }
+    }
+
     // Node circles
     node.append('circle')
       .attr('r', d => Math.sqrt(d.weight) * 3 + 4)
@@ -258,7 +285,7 @@ export default function NetworkGraph({ data, onNodeClick, currentTime, bridgeNod
       window.removeEventListener('resize', handleResize);
       simulation.stop();
     };
-  }, [data, currentTime, bridgeNodes]);
+  }, [data, currentTime, bridgeNodes, selectedNodeId]);
 
   // Use a ref for onNodeClick so we don't need it in deps
   const onNodeClickRef = useRef(onNodeClick);

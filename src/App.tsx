@@ -6,7 +6,8 @@ import { GraphData, GraphNode, fetchAmplifications, fetchRecentPosts } from './s
 import { analyzeNetwork, analyzeDeepNarrative, DeepAnalysisResult } from './services/gemini';
 import { calculateCentrality } from './utils/analysis';
 import { runForensics, ForensicsResults } from './utils/forensics';
-import { LucideIcon, Share2, Users, Radio, Link as LinkIcon, Cpu } from 'lucide-react';
+import { LucideIcon, Share2, Users, Radio, Link as LinkIcon, Cpu, MessageSquare, Terminal, Send, X } from 'lucide-react';
+import { askSleuthAssistant } from './services/gemini';
 
 export default function App() {
   const [handleInput, setHandleInput] = useState('niusde.bsky.social');
@@ -28,6 +29,12 @@ export default function App() {
   const [forensics, setForensics] = useState<ForensicsResults | null>(null);
   const [deepAnalysis, setDeepAnalysis] = useState<DeepAnalysisResult | null>(null);
   const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
+  
+  // Chat Assistant State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'model'; parts: { text: string }[] }[]>([]);
+  const [isChatTyping, setIsChatTyping] = useState(false);
 
   const runAnalysis = async (handleToRun: string) => {
     if (!handleToRun.trim()) return;
@@ -140,6 +147,30 @@ export default function App() {
     } finally {
       setIsLoading(false);
       setProgressMsg('');
+    }
+  };
+
+  const handleSendChat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || !graphData) return;
+
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    setChatHistory(prev => [...prev, { role: 'user', parts: [{ text: userMsg }] }]);
+    setIsChatTyping(true);
+
+    try {
+      const response = await askSleuthAssistant(userMsg, graphData, chatHistory);
+      setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: response.answer }] }]);
+      
+      if (response.focusNodeId) {
+        const node = graphData.nodes.find(n => n.id === response.focusNodeId);
+        if (node) setSelectedNode(node);
+      }
+    } catch (err) {
+      setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: "SYSTEM-FEHLER: Verbindung zum Cyber-Brain unterbrochen." }] }]);
+    } finally {
+      setIsChatTyping(false);
     }
   };
 
@@ -344,6 +375,7 @@ export default function App() {
               onNodeClick={handleNodeClick} 
               currentTime={currentTime || undefined}
               bridgeNodes={bridgeNodes}
+              selectedNodeId={selectedNode?.id}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -500,7 +532,11 @@ export default function App() {
             {topAmplifiers && topAmplifiers.length > 0 ? (
               <div className="space-y-4">
                 {topAmplifiers.map((node, i) => (
-                  <div key={node.id} className={`flex items-center justify-between ${i > 1 ? 'opacity-70' : ''}`}>
+                  <div 
+                    key={node.id} 
+                    onClick={() => setSelectedNode(node)}
+                    className={`flex items-center justify-between cursor-pointer p-1.5 rounded-xl hover:bg-slate-50 transition-all ${i > 1 ? 'opacity-70' : ''} ${selectedNode?.id === node.id ? 'bg-blue-50 ring-1 ring-blue-200 opacity-100' : ''}`}
+                  >
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
                         {node.avatar ? (
@@ -736,6 +772,81 @@ export default function App() {
           {isLoading ? 'EXECUTING SCAN...' : 'ENCRYPTED DATA FEED'}
         </div>
       </footer>
+
+      {/* Sleuth-Assistant Chat Button */}
+      <button 
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        className={`fixed bottom-20 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all z-40 border ${
+          isChatOpen ? 'bg-slate-800 border-slate-700 text-white rotate-90' : 'bg-neon-blue border-neon-blue/50 text-cyber-black hover:scale-110 shadow-[0_0_20px_rgba(0,242,255,0.4)]'
+        }`}
+      >
+        {isChatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
+        {!isChatOpen && <span className="absolute -top-1 -right-1 w-4 h-4 bg-glitch-rose rounded-full animate-ping"></span>}
+      </button>
+
+      {/* Sleuth-Assistant Chat Window */}
+      {isChatOpen && (
+        <div className="fixed bottom-36 right-6 w-[350px] h-[500px] bg-cyber-dark border border-slate-800 rounded-2xl shadow-2xl flex flex-col z-40 animate-in fade-in slide-in-from-bottom-8 overflow-hidden">
+          <div className="bg-slate-900 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-neon-blue" />
+              <span className="text-[10px] font-black text-neon-blue uppercase tracking-widest">Sleuth-Assistant v2.0</span>
+            </div>
+            <div className="flex gap-1">
+              <div className="w-2 h-2 rounded-full bg-neon-green"></div>
+              <div className="w-2 h-2 rounded-full bg-neon-purple"></div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono">
+            {chatHistory.length === 0 && (
+              <div className="text-center py-8">
+                <Terminal className="w-8 h-8 text-slate-800 mx-auto mb-2" />
+                <p className="text-[10px] text-slate-600 uppercase">Warte auf Befehl... Frag mich nach Gateway-Knoten, Bot-Clustern oder Narrativen.</p>
+              </div>
+            )}
+            {chatHistory.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-3 py-2 rounded-xl text-xs leading-relaxed ${
+                  msg.role === 'user' ? 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue' : 'bg-slate-900 border border-slate-800 text-slate-300'
+                }`}>
+                  {msg.parts[0].text}
+                </div>
+              </div>
+            ))}
+            {isChatTyping && (
+              <div className="flex justify-start">
+                <div className="bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl">
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 bg-neon-blue rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 bg-neon-blue rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div className="w-1.5 h-1.5 bg-neon-blue rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleSendChat} className="p-3 border-t border-slate-800 bg-slate-900/50">
+            <div className="relative">
+              <input 
+                type="text" 
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Query eingeben..."
+                className="w-full bg-cyber-black border border-slate-800 rounded-lg pl-3 pr-10 py-2 text-xs outline-none focus:border-neon-blue transition-colors text-white"
+              />
+              <button 
+                type="submit"
+                disabled={!chatInput.trim() || isChatTyping}
+                className="absolute right-1.5 top-1.5 p-1 text-neon-blue hover:text-white disabled:opacity-50"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
