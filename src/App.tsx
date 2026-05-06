@@ -376,11 +376,40 @@ export default function App() {
           {/* Legend */}
           {filteredGraphData && (
             <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 flex flex-wrap gap-2 md:gap-4 pointer-events-none">
-              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-500 shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-blue-600"></span> Startpunkt
+              <div className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-neon-blue shadow-[0_0_5px_#00f2ff]"></span> Startpunkt
               </div>
-              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-500 shadow-sm">
+              <div className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-slate-400"></span> Multiplikator
+              </div>
+            </div>
+          )}
+
+          {/* Timeline Slider Overlay - Moved inside Graph Area to avoid overlap */}
+          {timelineRange && graphData && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-lg px-6 z-30">
+              <div className="bg-cyber-dark/90 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-3 transition-all hover:border-neon-blue/50 group">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className={`w-3 h-3 text-neon-blue ${isLoading ? 'animate-spin' : ''}`} />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Zeitstrahl (Temporal Analysis)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-neon-blue bg-neon-blue/10 px-2 py-0.5 rounded border border-neon-blue/20">
+                    {new Date(currentTime || 0).toLocaleString()}
+                  </span>
+                </div>
+                <input 
+                  type="range" 
+                  min={timelineRange.min} 
+                  max={timelineRange.max} 
+                  value={new Date(currentTime || 0).getTime()}
+                  onChange={(e) => setCurrentTime(new Date(parseInt(e.target.value)).toISOString())}
+                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-neon-blue"
+                />
+                <div className="flex justify-between mt-1 px-1">
+                  <span className="text-[8px] text-slate-600 uppercase tracking-tighter">Patient Zero</span>
+                  <span className="text-[8px] text-slate-600 uppercase tracking-tighter">Gegenwart</span>
+                </div>
               </div>
             </div>
           )}
@@ -671,36 +700,6 @@ export default function App() {
           {isLoading ? 'EXECUTING SCAN...' : 'ENCRYPTED DATA FEED'}
         </div>
       </footer>
-
-      {/* Timeline Slider Overlay */}
-      {timelineRange && graphData && (
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 pointer-events-none z-50">
-          <div className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl p-4 pointer-events-auto transition-all hover:scale-[1.02]">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <RefreshCw className={`w-3 h-3 text-blue-500 ${isLoading ? 'animate-spin' : ''}`} />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Zeitstrahl (Temporal Analysis)</span>
-              </div>
-              <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                {new Date(currentTime || 0).toLocaleString()}
-              </span>
-            </div>
-            <input 
-              type="range" 
-              min={timelineRange.min} 
-              max={timelineRange.max} 
-              value={new Date(currentTime || 0).getTime()}
-              onChange={(e) => setCurrentTime(new Date(parseInt(e.target.value)).toISOString())}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-            <div className="flex justify-between mt-1 px-1">
-               <span className="text-[8px] text-slate-400 uppercase tracking-tighter">Patient Zero</span>
-               <span className="text-[8px] text-slate-400 uppercase tracking-tighter">Gegenwart</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
