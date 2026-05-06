@@ -527,15 +527,20 @@ export default function App() {
           ) : (
             <>
               {/* Top Multipliers Card */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-5 shadow-sm">
-                <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Top Multiplikatoren</h2>
+              <div className="bg-cyber-dark rounded-2xl border border-slate-800 p-4 md:p-5 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 opacity-5">
+                   <Zap className="w-12 h-12 text-neon-blue" />
+                </div>
+                <h2 className="text-xs font-bold text-neon-blue uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Zap className="w-3 h-3" /> Top Multiplikatoren
+                </h2>
             {topAmplifiers && topAmplifiers.length > 0 ? (
               <div className="space-y-4">
                 {topAmplifiers.map((node, i) => (
                   <div 
                     key={node.id} 
                     onClick={() => setSelectedNode(node)}
-                    className={`flex items-center justify-between cursor-pointer p-1.5 rounded-xl hover:bg-slate-50 transition-all ${i > 1 ? 'opacity-70' : ''} ${selectedNode?.id === node.id ? 'bg-blue-50 ring-1 ring-blue-200 opacity-100' : ''}`}
+                    className={`flex items-center justify-between cursor-pointer p-1.5 rounded-xl transition-all ${i > 1 ? 'opacity-70' : ''} ${selectedNode?.id === node.id ? 'bg-neon-blue/10 ring-1 ring-neon-blue/30 opacity-100' : 'hover:bg-slate-900'}`}
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
@@ -657,7 +662,10 @@ export default function App() {
           </div>
 
           {/* Intervention Logic Card */}
-          <div className="flex-1 bg-white rounded-2xl border border-rose-100 p-4 md:p-5 shadow-sm flex flex-col min-h-[300px]">
+          <div className="bg-cyber-dark rounded-2xl border border-slate-800 p-4 md:p-5 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-2 opacity-5">
+               <ShieldAlert className="w-12 h-12 text-glitch-rose" />
+            </div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 text-glitch-rose" />
@@ -709,7 +717,7 @@ export default function App() {
             <button 
               onClick={() => window.print()}
               disabled={!filteredGraphData || !deepAnalysis}
-              className="mt-auto w-full py-3 bg-neon-blue text-cyber-black rounded-xl text-xs font-black hover:bg-white transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,242,255,0.4)]"
+              className="mt-4 w-full py-3 bg-neon-blue text-cyber-black rounded-xl text-xs font-black hover:bg-white transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,242,255,0.4)]"
             >
               <Download className="w-4 h-4" /> EXPORT DOSSIER (PDF)
             </button>
