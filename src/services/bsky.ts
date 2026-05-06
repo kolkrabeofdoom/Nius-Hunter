@@ -17,6 +17,7 @@ export interface GraphNode extends d3.SimulationNodeDatum {
   links?: string[]; // Links found in bio
   isCoordinated?: boolean; // Flagged by synchronicity detector
   isSockpuppet?: boolean; // Flagged by metadata similarity
+  followersCount?: number;
 }
 
 export interface GraphEdge extends d3.SimulationLinkDatum<GraphNode> {
@@ -65,6 +66,7 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
                          (profile.description?.toLowerCase().includes("bot") ?? false),
         repostTimes: [],
         links: bioLinks,
+        followersCount: profile.followersCount || 0,
       });
     } else if (isRoot) {
       nodes.get(profile.did)!.isRoot = true;

@@ -566,6 +566,30 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Advanced Network Stats */}
+              <div className="grid grid-cols-2 gap-3 border-t border-slate-800 pt-3">
+                 <div>
+                    <span className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Bot-Dichte</span>
+                    <div className="text-xs font-mono text-neon-purple">{forensics?.botDensity.toFixed(1)}%</div>
+                 </div>
+                 <div>
+                    <span className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Netz-Stabilität</span>
+                    <div className="text-xs font-mono text-neon-green">{forensics?.networkDensity.toFixed(2)}%</div>
+                 </div>
+                 <div>
+                    <span className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Ø Toxizität</span>
+                    <div className={`text-xs font-mono ${forensics && forensics.avgToxicity > 40 ? 'text-glitch-rose' : 'text-white'}`}>
+                       {forensics?.avgToxicity.toFixed(0)}%
+                    </div>
+                 </div>
+                 <div>
+                    <span className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Brutto-Reichweite</span>
+                    <div className="text-xs font-mono text-slate-300">
+                       {(forensics?.totalReach || 0).toLocaleString()}
+                    </div>
+                 </div>
+              </div>
+
               {/* Top Sources */}
               {forensics?.topLinks && forensics.topLinks.length > 0 && (
                 <div className="border-t border-slate-800 pt-3">

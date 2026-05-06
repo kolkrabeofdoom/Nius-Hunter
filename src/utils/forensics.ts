@@ -4,6 +4,10 @@ export interface ForensicsResults {
   coordinatedNodeIds: string[];
   sockpuppetGroups: string[][];
   topLinks: { url: string; count: number }[];
+  avgToxicity: number;
+  botDensity: number;
+  totalReach: number;
+  networkDensity: number;
 }
 
 export function runForensics(data: GraphData): ForensicsResults {
@@ -53,25 +57,42 @@ export function runForensics(data: GraphData): ForensicsResults {
     .slice(0, 10);
 
   // 3. Sockpuppet Detection (Masken-Check)
-  // Very simple heuristic: similar bios (more than 70% word overlap)
   const processedNodes = data.nodes.filter(n => !n.isRoot && n.description);
   for (let i = 0; i < processedNodes.length; i++) {
     const group = [processedNodes[i].id];
     for (let j = i + 1; j < processedNodes.length; j++) {
       const sim = calculateSimilarity(processedNodes[i].description!, processedNodes[j].description!);
-      if (sim > 0.7) {
+      if (sim > 0.85) { // Stricter for groups
         group.push(processedNodes[j].id);
       }
     }
-    if (group.length > 1) {
+    if (group.length > 2) { // Only clusters of 3+
       sockpuppetGroups.push(group);
     }
   }
 
+  // 4. Advanced Metrics
+  const toxicNodes = data.nodes.filter(n => n.toxicity !== undefined);
+  const avgToxicity = toxicNodes.length > 0 
+    ? toxicNodes.reduce((acc, n) => acc + (n.toxicity || 0), 0) / toxicNodes.length 
+    : 0;
+
+  const botCount = data.nodes.filter(n => n.isBotCandidate).length;
+  const botDensity = (botCount / data.nodes.length) * 100;
+
+  const totalReach = data.nodes.reduce((acc, n) => acc + (n.followersCount || 0), 0);
+
+  const possibleEdges = (data.nodes.length * (data.nodes.length - 1)) / 2;
+  const networkDensity = possibleEdges > 0 ? (data.edges.length / possibleEdges) * 100 : 0;
+
   return {
     coordinatedNodeIds: Array.from(coordinatedNodes),
     sockpuppetGroups,
-    topLinks: sortedLinks
+    topLinks: sortedLinks,
+    avgToxicity,
+    botDensity,
+    totalReach,
+    networkDensity
   };
 }
 
