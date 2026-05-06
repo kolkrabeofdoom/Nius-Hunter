@@ -1,0 +1,6 @@
+{
+  "name": "NIUS HUNTER",
+  "description": "Visualisiert Bluesky-Netzwerke, analysiert Kommunikations- und Verstärkungswege und gibt Tipps zum Durchtrennen von Echokammern.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
