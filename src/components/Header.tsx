@@ -1,5 +1,4 @@
-import React from 'react';
-import { Network, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { Network, SlidersHorizontal, Loader2, Info } from 'lucide-react';
 
 interface HeaderProps {
   handleInput: string;
@@ -8,6 +7,7 @@ interface HeaderProps {
   onSearch: (e: React.FormEvent) => void;
   showSettings: boolean;
   setShowSettings: (val: boolean) => void;
+  onShowDoc: () => void;
 }
 
 export default function Header({ 
@@ -16,12 +16,13 @@ export default function Header({
   isLoading, 
   onSearch, 
   showSettings, 
-  setShowSettings 
+  setShowSettings,
+  onShowDoc
 }: HeaderProps) {
   return (
     <header className="h-20 bg-cyber-dark border-b border-slate-800 px-4 md:px-8 flex items-center justify-between shrink-0 z-20 shadow-lg relative">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-neon-blue rounded-lg flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(0,242,255,0.4)]">
+        <div className="w-10 h-10 bg-neon-blue rounded-lg flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(0,242,255,0.4)] cursor-pointer hover:scale-105 transition-transform" onClick={onShowDoc}>
           <Network className="w-6 h-6 text-cyber-black" />
         </div>
         <div className="flex flex-col">
@@ -35,6 +36,14 @@ export default function Header({
       </div>
       
       <div className="flex items-center gap-4 flex-1 sm:flex-none justify-end">
+        <button 
+          onClick={onShowDoc}
+          className="p-2.5 rounded-full transition-all border bg-slate-900 border-slate-800 text-slate-500 hover:text-white hover:border-slate-700 hover:shadow-[0_0_10px_rgba(255,255,255,0.1)]"
+          title="Dokumentation & Hilfe"
+        >
+          <Info className="w-4 h-4" />
+        </button>
+
         <button 
           onClick={() => setShowSettings(!showSettings)}
           className={`p-2.5 rounded-full transition-all border ${

@@ -14,6 +14,7 @@ import NetworkView from './components/NetworkView';
 import Sidebar from './components/Sidebar/Sidebar';
 import ChatAssistant from './components/ChatAssistant';
 import HelpOverlay from './components/HelpOverlay';
+import DocOverlay from './components/DocOverlay';
 
 export default function App() {
   const [handleInput, setHandleInput] = useState('niusde.bsky.social');
@@ -27,6 +28,7 @@ export default function App() {
   const [isDeepScan, setIsDeepScan] = useState(false);
   const [minWeight, setMinWeight] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
+  const [showDoc, setShowDoc] = useState(false);
   const [narrativeSummary, setNarrativeSummary] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentTime, setCurrentTime] = useState<string | null>(null);
@@ -401,6 +403,7 @@ export default function App() {
         onSearch={handleSearch}
         showSettings={showSettings}
         setShowSettings={setShowSettings}
+        onShowDoc={() => setShowDoc(true)}
       />
 
       {showSettings && (
@@ -470,6 +473,8 @@ export default function App() {
         onClose={() => setActiveHelp(null)}
         helpContent={helpContent}
       />
+
+      {showDoc && <DocOverlay onClose={() => setShowDoc(false)} />}
     </div>
   );
 }
