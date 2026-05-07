@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Zap } from 'lucide-react';
+import { ShieldAlert, Zap, Sparkles } from 'lucide-react';
 
 interface BriefingBannerProps {
   narrativeSummary: string | null;
