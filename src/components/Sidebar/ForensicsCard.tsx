@@ -40,7 +40,7 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-4">
+        <div className="grid grid-cols-3 gap-4 border-t border-slate-800/50 pt-4">
            <div className="group cursor-help" onClick={() => onHelpClick('bot_density')}>
               <span className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1 block">
                 Bot-Dichte
@@ -49,14 +49,25 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
                 {forensics?.botDensity.toFixed(1)}%
               </div>
            </div>
-           <div className="group cursor-help" onClick={() => onHelpClick('stability')}>
+           <div className="group cursor-help" onClick={() => onHelpClick('suspect_score')}>
               <span className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1 block">
-                Cluster-Stabilität
+                Ø Suspect Score
               </span>
-              <div className="text-sm font-mono font-black text-neon-green">
-                {forensics?.networkDensity.toFixed(2)}%
+              <div className={`text-sm font-mono font-black ${forensics && forensics.avgSuspectScore > 50 ? 'text-amber-500' : 'text-slate-200'}`}>
+                 {forensics?.avgSuspectScore.toFixed(1)}
               </div>
            </div>
+           <div className="group cursor-help" onClick={() => onHelpClick('stability')}>
+              <span className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1 block">
+                Stabilität
+              </span>
+              <div className="text-sm font-mono font-black text-neon-green">
+                {forensics?.networkDensity.toFixed(1)}%
+              </div>
+           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
            <div className="group cursor-help" onClick={() => onHelpClick('toxicity')}>
               <span className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1 block">
                 Ø Toxizität
@@ -67,7 +78,7 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
            </div>
            <div className="group cursor-help" onClick={() => onHelpClick('reach')}>
               <span className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1 block">
-                 Brutto-Reichweite
+                 Reichweite
               </span>
               <div className="text-sm font-mono font-black text-slate-300">
                  {(forensics?.totalReach || 0).toLocaleString()}
@@ -75,11 +86,30 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
            </div>
         </div>
 
+        {/* Temporal Bursts */}
+        {forensics?.burstClusters && forensics.burstClusters.length > 0 && (
+          <div className="border-t border-slate-800/50 pt-4 group cursor-help" onClick={() => onHelpClick('bursts')}>
+            <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-3 flex items-center gap-2">
+              Aktivitäts-Bursts (10min) <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-amber-500" />
+            </span>
+            <div className="space-y-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+              {forensics.burstClusters.slice(0, 5).map((burst, idx) => (
+                <div key={idx} className="flex items-center justify-between text-[10px] bg-amber-500/5 p-2 rounded-lg border border-amber-500/20">
+                  <span className="text-amber-200/70 font-mono">
+                    {burst.time.split(' ')[1]}
+                  </span>
+                  <span className="text-amber-500 font-bold font-mono">+{burst.count} Accounts</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Top Sources */}
         {forensics?.topLinks && forensics.topLinks.length > 0 && (
           <div className="border-t border-slate-800/50 pt-4 group cursor-help" onClick={() => onHelpClick('sources')}>
             <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-3 flex items-center gap-2">
-              Haupt-Datenquellen <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-neon-green" />
+              Datenquellen <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-neon-green" />
             </span>
             <div className="space-y-2">
               {forensics.topLinks.slice(0, 3).map((link, idx) => (
@@ -98,7 +128,7 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
         {forensics?.sockpuppetGroups && forensics.sockpuppetGroups.length > 0 && (
           <div className="border-t border-slate-800/50 pt-4 group cursor-help" onClick={() => onHelpClick('sockpuppets')}>
             <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-2 flex items-center gap-2">
-              Sockenpuppen-Cluster <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-neon-purple" />
+              Sockenpuppen <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-neon-purple" />
             </span>
             <div className="flex items-center gap-3 text-xs text-neon-purple bg-neon-purple/10 border border-neon-purple/20 p-2 rounded-lg">
               <Users className="w-4 h-4" />

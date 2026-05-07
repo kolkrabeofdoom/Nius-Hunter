@@ -54,6 +54,21 @@ export default function NodeDetailCard({ selectedNode, onClose, onSimulateBlock 
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-3 mt-1">
+          <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800/50">
+            <div className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Network Ratio</div>
+            <div className="text-sm font-mono font-bold text-white">
+              {selectedNode.followersCount || 0} / {selectedNode.followsCount || 0}
+            </div>
+          </div>
+          <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800/50">
+            <div className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Suspect Score</div>
+            <div className={`text-lg font-mono font-bold ${(selectedNode.followsCount || 0) / ((selectedNode.followersCount || 0) + 1) > 20 ? 'text-amber-500' : 'text-white'}`}>
+              {((selectedNode.followsCount || 0) / ((selectedNode.followersCount || 0) + 1)).toFixed(1)}
+            </div>
+          </div>
+        </div>
+
         <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800/50">
           <div className="text-[9px] text-slate-500 uppercase font-black tracking-widest flex items-center gap-2 mb-1">
             <Clock className="w-3 h-3 text-neon-blue" /> Registration Date

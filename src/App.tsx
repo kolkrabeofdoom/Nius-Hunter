@@ -94,6 +94,16 @@ export default function App() {
       title: "Synchronisierte Koordination",
       body: "Accounts, die innerhalb extrem kurzer Zeitfenster (Sekunden/Minuten) die gleichen Inhalte teilen. Menschliches Verhalten ist selten so präzise synchronisiert.",
       impact: "Starkes Indiz für automatisierte oder zentral gesteuerte Kampagnen."
+    },
+    suspect_score: {
+      title: "Ø Suspect Score (Ratio)",
+      body: "Berechnet das Verhältnis von gefolgten Accounts zu eigenen Followern. Ein extrem hohes Verhältnis (z.B. folgt 5000, hat 2 Follower) ist typisch für 'Amplifier-Bots'.",
+      impact: "Identifiziert Accounts, die nur existieren, um Reichweite für andere zu generieren."
+    },
+    bursts: {
+      title: "Aktivitäts-Bursts",
+      body: "Identifiziert Zeitfenster von 10 Minuten, in denen ungewöhnlich viele neue Accounts dem Netzwerk beitreten oder aktiv werden. Dies deutet auf einen koordinierten Angriff hin.",
+      impact: "Ermöglicht die Rekonstruktion des zeitlichen Ablaufs einer Desinformations-Kampagne."
     }
   };
 
