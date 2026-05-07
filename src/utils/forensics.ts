@@ -8,6 +8,8 @@ export interface ForensicsResults {
   botDensity: number;
   totalReach: number;
   networkDensity: number;
+  avgSuspectScore: number;
+  burstClusters: { time: string; count: number }[];
 }
 
 export function runForensics(data: GraphData): ForensicsResults {
@@ -77,7 +79,36 @@ export function runForensics(data: GraphData): ForensicsResults {
     ? toxicNodes.reduce((acc, n) => acc + (n.toxicity || 0), 0) / toxicNodes.length 
     : 0;
 
-  const botCount = data.nodes.filter(n => n.isBotCandidate).length;
+  // Calculate Suspect Scores based on the v1.2 Algorithm:
+  // P(bot) = (Synch_Index * 0.4) + (Freq_Index * 0.3) + (Meta_Age_Index * 0.3)
+  const nodeScores = data.nodes.map(node => {
+    let score = 0;
+    
+    // 4.1 Synch_Index (0.4) - Based on coordinated activity
+    const synchIndex = coordinatedNodes.has(node.id) ? 100 : 0;
+    score += synchIndex * 0.4;
+    
+    // 4.2 Meta_Age_Index (0.3) - Suspicion for new accounts
+    const createdDate = new Date(node.createdAt);
+    const ageInDays = (new Date().getTime() - createdDate.getTime()) / (1000 * 3600 * 24);
+    const metaAgeIndex = ageInDays < 30 ? 100 : ageInDays < 90 ? 60 : ageInDays < 365 ? 30 : 0;
+    score += metaAgeIndex * 0.3;
+    
+    // 4.3 Freq_Index / Heuristic (0.3) - Handle and bio patterns
+    let freqIndex = 0;
+    if (node.isBotCandidate) freqIndex += 60;
+    if ((node.followersCount || 0) < 10) freqIndex += 40;
+    score += Math.min(100, freqIndex) * 0.3;
+    
+    return score;
+  });
+
+  const avgSuspectScore = nodeScores.length > 0 
+    ? nodeScores.reduce((acc, s) => acc + s, 0) / nodeScores.length 
+    : 0;
+
+  // Identify nodes with high probability as bots
+  const botCount = nodeScores.filter(score => score > 65).length;
   const botDensity = (botCount / data.nodes.length) * 100;
 
   const totalReach = data.nodes.reduce((acc, n) => acc + (n.followersCount || 0), 0);
@@ -92,7 +123,12 @@ export function runForensics(data: GraphData): ForensicsResults {
     avgToxicity,
     botDensity,
     totalReach,
-    networkDensity
+    networkDensity,
+    avgSuspectScore,
+    burstClusters: Object.entries(timeBuckets)
+      .map(([time, ids]) => ({ time, count: ids.length }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
   };
 }
 

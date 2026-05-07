@@ -21,12 +21,12 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
             <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest flex items-center gap-2">
               Synchronität / Koordination <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-neon-blue" />
             </span>
-            <span className="text-[10px] text-neon-blue font-mono font-bold">{forensics?.coordinatedNodeIds.length || 0} IDs</span>
+            <span className="text-[10px] text-neon-blue font-mono font-bold">{forensics?.coordinatedNodeIds?.length || 0} IDs</span>
           </div>
           <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800/50">
             <div 
               className="h-full bg-neon-blue shadow-[0_0_10px_#00f2ff]" 
-              style={{ width: `${Math.min(100, (forensics?.coordinatedNodeIds.length || 0) * 10)}%` }}
+              style={{ width: `${Math.min(100, (forensics?.coordinatedNodeIds?.length || 0) * 10)}%` }}
             ></div>
           </div>
         </div>
@@ -37,15 +37,15 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
                 Bot-Dichte
               </span>
               <div className="text-sm font-mono font-black text-neon-purple">
-                {forensics?.botDensity.toFixed(1)}%
+                {(forensics?.botDensity ?? 0).toFixed(1)}%
               </div>
            </div>
            <div className="group cursor-help" onClick={() => onHelpClick('suspect_score')}>
               <span className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1 block">
                 Ø Suspect Score
               </span>
-              <div className={`text-sm font-mono font-black ${forensics && forensics.avgSuspectScore > 50 ? 'text-amber-500' : 'text-slate-200'}`}>
-                 {forensics?.avgSuspectScore.toFixed(1)}
+              <div className={`text-sm font-mono font-black ${forensics && (forensics.avgSuspectScore ?? 0) > 50 ? 'text-amber-500' : 'text-slate-200'}`}>
+                 {(forensics?.avgSuspectScore ?? 0).toFixed(1)}
               </div>
            </div>
            <div className="group cursor-help" onClick={() => onHelpClick('stability')}>
@@ -53,7 +53,7 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
                 Stabilität
               </span>
               <div className="text-sm font-mono font-black text-neon-green">
-                {forensics?.networkDensity.toFixed(1)}%
+                {(forensics?.networkDensity ?? 0).toFixed(1)}%
               </div>
            </div>
         </div>
@@ -63,8 +63,8 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
               <span className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1 block">
                 Ø Toxizität
               </span>
-              <div className={`text-sm font-mono font-black ${forensics && forensics.avgToxicity > 40 ? 'text-rose-500' : 'text-slate-200'}`}>
-                 {forensics?.avgToxicity.toFixed(0)}%
+              <div className={`text-sm font-mono font-black ${forensics && (forensics.avgToxicity ?? 0) > 40 ? 'text-rose-500' : 'text-slate-200'}`}>
+                 {(forensics?.avgToxicity ?? 0).toFixed(0)}%
               </div>
            </div>
            <div className="group cursor-help" onClick={() => onHelpClick('reach')}>
