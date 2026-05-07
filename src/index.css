@@ -18,10 +18,17 @@
   --color-cyber-dark: var(--cyber-dark);
 }
 
+html {
+  height: auto;
+  min-height: 100%;
+}
+
 body {
   background-color: var(--cyber-black);
   color: #e2e8f0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 100%;
 }
 
 /* Scanline Effect */
@@ -91,6 +98,12 @@ input[type="range"]::-webkit-slider-thumb {
 
 .animate-police-lights {
   animation: police-lights 0.5s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
 }
 
 /* Print Styles for Intelligence Dossier */
