@@ -18,19 +18,10 @@ export default function MultipliersCard({
   onHelpClick 
 }: MultipliersCardProps) {
   return (
-    <div className="bg-cyber-dark rounded-2xl border border-slate-800 p-5 shadow-2xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+    <div className="space-y-3 relative">
+      <div className="absolute -top-12 -right-2 p-2 opacity-5 pointer-events-none">
          <Zap className="w-12 h-12 text-neon-blue" />
       </div>
-      <h2 
-        className="text-[10px] font-black text-neon-blue uppercase tracking-[0.2em] mb-5 flex items-center justify-between group cursor-pointer relative z-10" 
-        onClick={() => onHelpClick('multipliers')}
-      >
-        <div className="flex items-center gap-2">
-          <Zap className="w-3 h-3" /> Top Multiplikatoren
-        </div>
-        <HelpCircle className="w-3.5 h-3.5 text-slate-600 group-hover:text-neon-blue transition-colors" />
-      </h2>
       
       {topAmplifiers && topAmplifiers.length > 0 ? (
         <div className="space-y-3">

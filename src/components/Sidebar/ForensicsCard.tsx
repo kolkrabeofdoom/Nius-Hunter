@@ -9,19 +9,10 @@ interface ForensicsCardProps {
 
 export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardProps) {
   return (
-    <div className="bg-cyber-dark rounded-2xl border border-slate-800 p-5 shadow-2xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+    <div className="space-y-5 relative">
+      <div className="absolute -top-12 -right-2 p-2 opacity-5 pointer-events-none">
          <Radio className="w-12 h-12 text-neon-green" />
       </div>
-      <h2 
-        className="text-[10px] font-black text-neon-green uppercase tracking-[0.2em] mb-5 flex items-center justify-between group cursor-pointer relative z-10" 
-        onClick={() => onHelpClick('forensics')}
-      >
-        <div className="flex items-center gap-2">
-          <Cpu className="w-3 h-3" /> Forensik-Scan Ergebnisse
-        </div>
-        <HelpCircle className="w-3.5 h-3.5 text-slate-600 group-hover:text-neon-green transition-colors" />
-      </h2>
       
       <div className="space-y-5">
         {/* Synchronicity */}
