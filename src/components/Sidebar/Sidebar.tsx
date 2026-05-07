@@ -58,7 +58,7 @@ export default function Sidebar({
   communities
 }: SidebarProps) {
   return (
-    <aside className="w-full md:w-80 flex flex-col gap-6 shrink-0 overflow-y-auto pb-4 md:pb-0 h-full scrollbar-hide">
+    <aside className="w-full md:w-96 flex flex-col gap-8 shrink-0 overflow-y-auto pb-4 md:pb-0 h-full scrollbar-hide">
       {selectedNode ? (
         <NodeDetailCard 
           selectedNode={selectedNode} 
@@ -67,45 +67,63 @@ export default function Sidebar({
         />
       ) : (
         <>
-          <MultipliersCard 
-            topAmplifiers={topAmplifiers} 
-            isLoading={isLoading} 
-            onNodeClick={onNodeClick} 
-            selectedNodeId={selectedNode?.id}
-            onHelpClick={onHelpClick}
-          />
+          {/* Intelligence Section */}
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-3 px-1">
+              <div className="h-px flex-1 bg-slate-800"></div>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Intelligence Hub</span>
+              <div className="h-px flex-1 bg-slate-800"></div>
+            </div>
 
-          <DeepAnalysisCard 
-            result={deepAnalysis} 
-            isAnalyzing={isDeepAnalyzing} 
-          />
+            <ComparisonCard 
+              comparison={comparison} 
+              oldTimestamp={oldTimestamp} 
+            />
 
-          <CommunityCard 
-            communities={communities} 
-            onHelpClick={onHelpClick} 
-          />
-          
-          <ForensicsCard 
-            forensics={forensics} 
-            onHelpClick={onHelpClick} 
-          />
-          
-          <ComparisonCard 
-            comparison={comparison} 
-            oldTimestamp={oldTimestamp} 
-          />
+            <CommunityCard 
+              communities={communities} 
+              onHelpClick={onHelpClick} 
+            />
+            
+            <ForensicsCard 
+              forensics={forensics} 
+              onHelpClick={onHelpClick} 
+            />
 
-          <InterventionCard 
-            blockedNodeIds={blockedNodeIds}
-            influenceLost={influenceLost}
-            graphData={graphData}
-            topAmplifier={topAmplifiers && topAmplifiers.length > 0 ? topAmplifiers[0] : null}
-            onRemoveBlock={onRemoveBlock}
-            onExportBlocklist={onExportBlocklist}
-            onExportDossier={onExportDossier}
-            onHelpClick={onHelpClick}
-            onSaveSnapshot={onSaveSnapshot}
-          />
+            <MultipliersCard 
+              topAmplifiers={topAmplifiers} 
+              isLoading={isLoading} 
+              onNodeClick={onNodeClick} 
+              selectedNodeId={selectedNode?.id}
+              onHelpClick={onHelpClick}
+            />
+
+            <DeepAnalysisCard 
+              result={deepAnalysis} 
+              isAnalyzing={isDeepAnalyzing} 
+            />
+          </div>
+
+          {/* Action Section */}
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-3 px-1">
+              <div className="h-px flex-1 bg-slate-800"></div>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Strategic Action</span>
+              <div className="h-px flex-1 bg-slate-800"></div>
+            </div>
+
+            <InterventionCard 
+              blockedNodeIds={blockedNodeIds}
+              influenceLost={influenceLost}
+              graphData={graphData}
+              topAmplifier={topAmplifiers && topAmplifiers.length > 0 ? topAmplifiers[0] : null}
+              onRemoveBlock={onRemoveBlock}
+              onExportBlocklist={onExportBlocklist}
+              onExportDossier={onExportDossier}
+              onHelpClick={onHelpClick}
+              onSaveSnapshot={onSaveSnapshot}
+            />
+          </div>
         </>
       )}
     </aside>

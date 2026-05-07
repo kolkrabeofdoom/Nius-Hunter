@@ -10,7 +10,7 @@ export default function BriefingBanner({ narrativeSummary, isAnalyzing }: Briefi
   if (!narrativeSummary && !isAnalyzing) return null;
 
   return (
-    <div className="mx-4 md:mx-8 mt-4 bg-slate-900 border-l-4 border-neon-blue rounded-r-xl p-4 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden">
+    <div className="bg-slate-900/80 backdrop-blur-xl border-l-4 border-neon-blue rounded-r-xl p-4 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden">
       <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
          <ShieldAlert className="w-16 h-16 text-white rotate-12" />
       </div>

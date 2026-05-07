@@ -1,7 +1,8 @@
 import React from 'react';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle, Focus } from 'lucide-react';
 import NetworkGraph from './NetworkGraph';
 import LoaderClock from './LoaderClock';
+import BriefingBanner from './BriefingBanner';
 import { GraphData, GraphNode } from '../services/bsky';
 
 interface NetworkViewProps {
@@ -15,6 +16,8 @@ interface NetworkViewProps {
   timelineRange: { min: number; max: number } | null;
   bridgeNodes: string[];
   selectedNodeId?: string | null;
+  narrativeSummary: string | null;
+  isAnalyzing: boolean;
 }
 
 export default function NetworkView({
@@ -27,13 +30,36 @@ export default function NetworkView({
   setCurrentTime,
   timelineRange,
   bridgeNodes,
-  selectedNodeId
+  selectedNodeId,
+  narrativeSummary,
+  isAnalyzing
 }: NetworkViewProps) {
   return (
     <div className="flex-1 bg-cyber-dark rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col min-h-[500px]">
       {/* Grid Background */}
       <div className="absolute inset-0 opacity-5 bg-[linear-gradient(rgba(0,242,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,242,255,0.1)_1px,transparent_1px)] [background-size:40px_40px] pointer-events-none"></div>
       
+      {/* Floating Briefing Banner */}
+      {(narrativeSummary || isAnalyzing) && (
+        <div className="absolute top-6 left-6 right-16 z-40 pointer-events-auto">
+          <BriefingBanner 
+            narrativeSummary={narrativeSummary}
+            isAnalyzing={isAnalyzing}
+          />
+        </div>
+      )}
+
+      {/* View Controls */}
+      <div className="absolute top-6 right-6 flex flex-col gap-2 z-40">
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('center-graph'))}
+          className="w-10 h-10 bg-cyber-black/80 backdrop-blur-xl border border-slate-800 rounded-xl flex items-center justify-center text-slate-400 hover:text-neon-blue hover:border-neon-blue transition-all shadow-xl group"
+          title="Graph zentrieren"
+        >
+          <Focus className="w-5 h-5 group-active:scale-90 transition-transform" />
+        </button>
+      </div>
+
       {filteredGraphData ? (
         <NetworkGraph 
           data={filteredGraphData} 
