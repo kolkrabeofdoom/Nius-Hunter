@@ -109,6 +109,16 @@ export default function App() {
       title: "Aktivitäts-Bursts",
       body: "Identifiziert Zeitfenster von 10 Minuten, in denen ungewöhnlich viele neue Accounts dem Netzwerk beitreten oder aktiv werden. Dies deutet auf einen koordinierten Angriff hin.",
       impact: "Ermöglicht die Rekonstruktion des zeitlichen Ablaufs einer Desinformations-Kampagne."
+    },
+    comparison: {
+      title: "Zeitlicher Vergleich",
+      body: "Vergleicht den aktuellen Scan mit einem gespeicherten Snapshot. Wir analysieren das Wachstum der Knoten, die Veränderung der Toxizität und die Reichweiten-Entwicklung.",
+      impact: "Zeigt die Dynamik und Geschwindigkeit einer Kampagne über die Zeit."
+    },
+    communities: {
+      title: "Community Detection",
+      body: "Nutzt den Label Propagation Algorithmus, um das Netzwerk automatisch in funktionale Gruppen zu unterteilen. So lassen sich Kerngruppen von Randerscheinungen trennen.",
+      impact: "Hilft dabei, die interne Struktur und Rollenverteilung im Netzwerk zu verstehen."
     }
   };
 
@@ -130,11 +140,14 @@ export default function App() {
       setGraphData(data);
       
       // Setup timeline range
-      const timestamps = data.nodes.map(n => new Date(n.createdAt).getTime());
-      const min = Math.min(...timestamps);
-      const max = Math.max(...timestamps);
-      setTimelineRange({ min, max });
-      setCurrentTime(new Date(max).toISOString());
+      const validNodes = data.nodes.filter(n => n.createdAt && !isNaN(new Date(n.createdAt).getTime()));
+      if (validNodes.length > 0) {
+        const timestamps = validNodes.map(n => new Date(n.createdAt).getTime());
+        const min = Math.min(...timestamps);
+        const max = Math.max(...timestamps);
+        setTimelineRange({ min, max });
+        setCurrentTime(new Date(max).toISOString());
+      }
 
       // Run Centrality Analysis
       const results = calculateCentrality(data);
@@ -181,7 +194,7 @@ export default function App() {
       setGraphData(enrichedData);
       
       // Run AI Analysis on top nodes
-      const topNodes = [...data.nodes]
+      const topNodes = [...forensicNodes]
         .filter(n => !n.isRoot)
         .sort((a, b) => b.weight - a.weight)
         .slice(0, 10);
@@ -193,27 +206,32 @@ export default function App() {
           const aiResult = await analyzeNetwork(handleToRun.trim(), topNodes);
           setNarrativeSummary(aiResult.summary);
           
-          // Apply toxicity to nodes
-          const updatedNodes = data.nodes.map(node => {
+          // Apply toxicity to nodes WITHOUT losing forensic flags
+          const updatedNodes = forensicNodes.map(node => {
             const tox = aiResult.toxicNodes[node.handle];
             return tox !== undefined ? { ...node, toxicity: tox } : node;
           });
-          setGraphData({ ...data, nodes: updatedNodes });
+          
+          const finalData = { ...data, nodes: updatedNodes };
+          setGraphData(finalData);
 
           // Update selectedNode if it's currently showing stale data
           if (selectedNode) {
             const updatedSelected = updatedNodes.find(n => n.id === selectedNode.id);
             if (updatedSelected) setSelectedNode(updatedSelected);
           }
+          
+          // Trigger Deep Analysis with the final data
+          triggerDeepAnalysis(finalData);
         } catch (aiErr) {
           console.error("AI Analysis failed", aiErr);
+          triggerDeepAnalysis(enrichedData);
         } finally {
           setIsAnalyzing(false);
         }
+      } else {
+        triggerDeepAnalysis(enrichedData);
       }
-
-      // Trigger Deep Analysis automatically
-      triggerDeepAnalysis();
     } catch (err: any) {
       setError(err.message || 'Fehler beim Laden des Netzwerks.');
     } finally {
@@ -222,9 +240,9 @@ export default function App() {
     }
   };
 
-  const triggerDeepAnalysis = async () => {
-    if (!graphData) return;
-    const topNodes = [...graphData.nodes]
+  const triggerDeepAnalysis = async (currentGraphData = graphData) => {
+    if (!currentGraphData) return;
+    const topNodes = [...currentGraphData.nodes]
       .filter(n => !n.isRoot)
       .sort((a, b) => b.weight - a.weight)
       .slice(0, 10);
