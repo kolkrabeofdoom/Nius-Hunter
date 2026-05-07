@@ -27,9 +27,17 @@ export default function BriefingBanner({ narrativeSummary, isAnalyzing }: Briefi
                <div className="h-3 w-48 bg-slate-800 rounded animate-pulse"></div>
             </div>
           ) : (
-            <p className="text-sm text-slate-100 font-medium leading-relaxed italic">
-              "{narrativeSummary}"
-            </p>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-slate-100 font-medium leading-relaxed italic">
+                "{narrativeSummary}"
+              </p>
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('run-deep-analysis'))}
+                className="shrink-0 px-4 py-2 bg-neon-purple/20 hover:bg-neon-purple/40 text-neon-purple text-[10px] font-black rounded-lg border border-neon-purple/30 transition-all uppercase tracking-widest flex items-center gap-2 group"
+              >
+                <Sparkles className="w-3 h-3 group-hover:rotate-12 transition-transform" /> Tiefenanalyse
+              </button>
+            </div>
           )}
         </div>
       </div>

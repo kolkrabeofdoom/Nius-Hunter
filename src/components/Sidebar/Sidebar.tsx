@@ -3,8 +3,10 @@ import NodeDetailCard from './NodeDetailCard';
 import MultipliersCard from './MultipliersCard';
 import ForensicsCard from './ForensicsCard';
 import InterventionCard from './InterventionCard';
+import DeepAnalysisCard from './DeepAnalysisCard';
 import { GraphNode, GraphData } from '../../services/bsky';
 import { ForensicsResults } from '../../utils/forensics';
+import { DeepAnalysisResult } from '../../services/gemini';
 
 interface SidebarProps {
   selectedNode: GraphNode | null;
@@ -21,6 +23,8 @@ interface SidebarProps {
   onRemoveBlock: (id: string) => void;
   onExportBlocklist: () => void;
   onExportDossier: () => void;
+  deepAnalysis: DeepAnalysisResult | null;
+  isDeepAnalyzing: boolean;
 }
 
 export default function Sidebar({
@@ -37,7 +41,9 @@ export default function Sidebar({
   graphData,
   onRemoveBlock,
   onExportBlocklist,
-  onExportDossier
+  onExportDossier,
+  deepAnalysis,
+  isDeepAnalyzing
 }: SidebarProps) {
   return (
     <aside className="w-full md:w-80 flex flex-col gap-6 shrink-0 overflow-y-auto pb-4 md:pb-0 h-full scrollbar-hide">
@@ -55,6 +61,11 @@ export default function Sidebar({
             onNodeClick={onNodeClick} 
             selectedNodeId={selectedNode?.id}
             onHelpClick={onHelpClick}
+          />
+
+          <DeepAnalysisCard 
+            result={deepAnalysis} 
+            isAnalyzing={isDeepAnalyzing} 
           />
           
           <ForensicsCard 

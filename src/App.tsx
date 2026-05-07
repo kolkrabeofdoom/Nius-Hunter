@@ -181,34 +181,8 @@ export default function App() {
         }
       }
 
-      // Deep Narrative Analysis
-      if (topNodes.length > 0) {
-        setIsDeepAnalyzing(true);
-        try {
-          const nodesWithPosts = await Promise.all(
-            topNodes.slice(0, 5).map(async (n) => ({
-              handle: n.handle,
-              posts: await fetchRecentPosts(n.id, 10)
-            }))
-          );
-          
-          if (nodesWithPosts.some(n => n.posts.length > 0)) {
-            const deepRes = await analyzeDeepNarrative(handleToRun.trim(), nodesWithPosts);
-            setDeepAnalysis(deepRes);
-          } else {
-            setDeepAnalysis({
-              talkingPoints: ["KEINE REZENTEN POSTS GEFUNDEN", "SYSTEM-SCAN UNVOLLSTÄNDIG"],
-              intent: "NICHT IDENTIFIZIERBAR",
-              threatLevel: "LOW"
-            });
-          }
-        } catch (err) {
-          console.error("Deep Analysis failed", err);
-        } finally {
-          setIsDeepAnalyzing(false);
-        }
-      }
-
+      // Trigger Deep Analysis automatically
+      triggerDeepAnalysis();
     } catch (err: any) {
       setError(err.message || 'Fehler beim Laden des Netzwerks.');
     } finally {
@@ -216,6 +190,47 @@ export default function App() {
       setProgressMsg('');
     }
   };
+
+  const triggerDeepAnalysis = async () => {
+    if (!graphData) return;
+    const topNodes = [...graphData.nodes]
+      .filter(n => !n.isRoot)
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 10);
+
+    if (topNodes.length === 0) return;
+
+    setIsDeepAnalyzing(true);
+    try {
+      const nodesWithPosts = await Promise.all(
+        topNodes.slice(0, 5).map(async (n) => ({
+          handle: n.handle,
+          posts: await fetchRecentPosts(n.id, 10)
+        }))
+      );
+      
+      if (nodesWithPosts.some(n => n.posts.length > 0)) {
+        const deepRes = await analyzeDeepNarrative(handleInput, nodesWithPosts);
+        setDeepAnalysis(deepRes);
+      } else {
+        setDeepAnalysis({
+          talkingPoints: ["KEINE REZENTEN POSTS GEFUNDEN", "SYSTEM-SCAN UNVOLLSTÄNDIG"],
+          intent: "NICHT IDENTIFIZIERBAR",
+          threatLevel: "LOW"
+        });
+      }
+    } catch (err) {
+      console.error("Deep Analysis failed", err);
+    } finally {
+      setIsDeepAnalyzing(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => triggerDeepAnalysis();
+    window.addEventListener('run-deep-analysis', handler);
+    return () => window.removeEventListener('run-deep-analysis', handler);
+  }, [graphData, handleInput]);
 
   useEffect(() => {
     runAnalysis('niusde.bsky.social');
@@ -371,6 +386,8 @@ export default function App() {
           onRemoveBlock={(id) => setBlockedNodeIds(prev => prev.filter(p => p !== id))}
           onExportBlocklist={handleExportBlocklist}
           onExportDossier={handleExportDossier}
+          deepAnalysis={deepAnalysis}
+          isDeepAnalyzing={isDeepAnalyzing}
         />
       </main>
 
