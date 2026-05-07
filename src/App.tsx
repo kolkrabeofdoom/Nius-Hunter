@@ -4,6 +4,7 @@ import { analyzeNetwork, analyzeDeepNarrative, DeepAnalysisResult, askSleuthAssi
 import { calculateCentrality } from './utils/analysis';
 import { runForensics, ForensicsResults } from './utils/forensics';
 import { saveScanToHistory, getHistory, compareScans, ScanComparison, ScanHistoryEntry } from './utils/history';
+import { detectCommunities, Community } from './utils/communities';
 
 // Components
 import Header from './components/Header';
@@ -37,6 +38,7 @@ export default function App() {
   const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
   const [comparison, setComparison] = useState<ScanComparison | null>(null);
   const [previousScan, setPreviousScan] = useState<ScanHistoryEntry | null>(null);
+  const [communities, setCommunities] = useState<Community[]>([]);
   
   // Chat Assistant State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -142,6 +144,9 @@ export default function App() {
       const forensicResults = runForensics(data);
       setForensics(forensicResults);
 
+      const detectedCommunities = detectCommunities(data, forensicResults);
+      setCommunities(detectedCommunities);
+
       // Check for history comparison
       const history = getHistory();
       const prev = history.find(h => h.handle === handleToRun.trim());
@@ -162,11 +167,15 @@ export default function App() {
       }
 
       // Flag nodes in state
-      const forensicNodes = data.nodes.map(n => ({
-        ...n,
-        isCoordinated: forensicResults.coordinatedNodeIds.includes(n.id),
-        isSockpuppet: forensicResults.sockpuppetGroups.some(g => g.includes(n.id))
-      }));
+      const forensicNodes = data.nodes.map(n => {
+        const community = detectedCommunities.find(c => c.nodes.includes(n.id));
+        return {
+          ...n,
+          isCoordinated: forensicResults.coordinatedNodeIds.includes(n.id),
+          isSockpuppet: forensicResults.sockpuppetGroups.some(g => g.includes(n.id)),
+          clusterColor: community?.color || '#334155'
+        };
+      });
       
       const enrichedData = { ...data, nodes: forensicNodes };
       setGraphData(enrichedData);
@@ -425,6 +434,7 @@ export default function App() {
           comparison={comparison}
           oldTimestamp={previousScan?.timestamp || null}
           onSaveSnapshot={handleSaveSnapshot}
+          communities={communities}
         />
       </main>
 

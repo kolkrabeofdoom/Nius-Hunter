@@ -5,10 +5,12 @@ import ForensicsCard from './ForensicsCard';
 import InterventionCard from './InterventionCard';
 import DeepAnalysisCard from './DeepAnalysisCard';
 import ComparisonCard from './ComparisonCard';
+import CommunityCard from './CommunityCard';
 import { GraphNode, GraphData } from '../../services/bsky';
 import { ForensicsResults } from '../../utils/forensics';
 import { DeepAnalysisResult } from '../../services/gemini';
 import { ScanComparison } from '../../utils/history';
+import { Community } from '../../utils/communities';
 
 interface SidebarProps {
   selectedNode: GraphNode | null;
@@ -30,6 +32,7 @@ interface SidebarProps {
   comparison: ScanComparison | null;
   oldTimestamp: string | null;
   onSaveSnapshot: () => void;
+  communities: Community[];
 }
 
 export default function Sidebar({
@@ -51,7 +54,8 @@ export default function Sidebar({
   isDeepAnalyzing,
   comparison,
   oldTimestamp,
-  onSaveSnapshot
+  onSaveSnapshot,
+  communities
 }: SidebarProps) {
   return (
     <aside className="w-full md:w-80 flex flex-col gap-6 shrink-0 overflow-y-auto pb-4 md:pb-0 h-full scrollbar-hide">
@@ -74,6 +78,11 @@ export default function Sidebar({
           <DeepAnalysisCard 
             result={deepAnalysis} 
             isAnalyzing={isDeepAnalyzing} 
+          />
+
+          <CommunityCard 
+            communities={communities} 
+            onHelpClick={onHelpClick} 
           />
           
           <ForensicsCard 
