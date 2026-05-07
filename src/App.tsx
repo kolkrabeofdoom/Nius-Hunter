@@ -270,6 +270,10 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportDossier = () => {
+    window.print();
+  };
+
   const influenceLost = useMemo(() => {
     if (!graphData || blockedNodeIds.length === 0) return 0;
     const totalWeight = graphData.nodes.reduce((acc, n) => acc + n.weight, 0);
@@ -305,6 +309,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full bg-cyber-black flex flex-col font-sans text-slate-300">
+      {/* Dossier Print Header (Visible only when printing) */}
+      <div className="dossier-print-header">
+        <div className="dossier-title">NIUS HUNTER // INTELLIGENCE DOSSIER</div>
+        <div className="dossier-metadata">
+          TARGET_ID: @{handleInput} | SCAN_DATE: {new Date().toLocaleString('de-DE')} | CLASSIFICATION: CONFIDENTIAL
+        </div>
+        <div className="dossier-watermark">CONFIDENTIAL</div>
+      </div>
+
       <Header 
         handleInput={handleInput}
         setHandleInput={setHandleInput}
@@ -357,6 +370,7 @@ export default function App() {
           graphData={graphData}
           onRemoveBlock={(id) => setBlockedNodeIds(prev => prev.filter(p => p !== id))}
           onExportBlocklist={handleExportBlocklist}
+          onExportDossier={handleExportDossier}
         />
       </main>
 

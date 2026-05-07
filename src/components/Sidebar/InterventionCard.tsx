@@ -1,5 +1,4 @@
-import React from 'react';
-import { ShieldAlert, HelpCircle, Ban, Download } from 'lucide-react';
+import { ShieldAlert, HelpCircle, Ban, Download, FileText } from 'lucide-react';
 import { GraphData, GraphNode } from '../../services/bsky';
 
 interface InterventionCardProps {
@@ -9,6 +8,7 @@ interface InterventionCardProps {
   topAmplifier: GraphNode | null;
   onRemoveBlock: (id: string) => void;
   onExportBlocklist: () => void;
+  onExportDossier: () => void;
   onHelpClick: (id: string) => void;
 }
 
@@ -19,6 +19,7 @@ export default function InterventionCard({
   topAmplifier,
   onRemoveBlock,
   onExportBlocklist,
+  onExportDossier,
   onHelpClick
 }: InterventionCardProps) {
   return (
@@ -84,13 +85,23 @@ export default function InterventionCard({
         )}
       </div>
 
-      <button 
-        onClick={onExportBlocklist}
-        disabled={!graphData}
-        className="w-full py-3 bg-slate-100 hover:bg-white text-cyber-black rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-lg disabled:opacity-50"
-      >
-        <Download className="w-4 h-4" /> Export Blocklist (.txt)
-      </button>
+      <div className="flex flex-col gap-2">
+        <button 
+          onClick={onExportBlocklist}
+          disabled={!graphData}
+          className="w-full py-3 bg-slate-100 hover:bg-white text-cyber-black rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-lg disabled:opacity-50"
+        >
+          <Download className="w-4 h-4" /> Export Blocklist (.txt)
+        </button>
+        
+        <button 
+          onClick={onExportDossier}
+          disabled={!graphData}
+          className="w-full py-3 bg-neon-blue hover:bg-white text-cyber-black rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,242,255,0.3)] disabled:opacity-50"
+        >
+          <FileText className="w-4 h-4" /> Export PDF Dossier
+        </button>
+      </div>
     </div>
   );
 }

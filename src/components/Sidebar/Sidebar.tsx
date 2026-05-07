@@ -20,6 +20,7 @@ interface SidebarProps {
   graphData: GraphData | null;
   onRemoveBlock: (id: string) => void;
   onExportBlocklist: () => void;
+  onExportDossier: () => void;
 }
 
 export default function Sidebar({
@@ -35,7 +36,8 @@ export default function Sidebar({
   influenceLost,
   graphData,
   onRemoveBlock,
-  onExportBlocklist
+  onExportBlocklist,
+  onExportDossier
 }: SidebarProps) {
   return (
     <aside className="w-full md:w-80 flex flex-col gap-6 shrink-0 overflow-y-auto pb-4 md:pb-0 h-full scrollbar-hide">
@@ -67,6 +69,7 @@ export default function Sidebar({
             topAmplifier={topAmplifiers && topAmplifiers.length > 0 ? topAmplifiers[0] : null}
             onRemoveBlock={onRemoveBlock}
             onExportBlocklist={onExportBlocklist}
+            onExportDossier={onExportDossier}
             onHelpClick={onHelpClick}
           />
         </>
