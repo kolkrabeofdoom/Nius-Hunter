@@ -3,6 +3,7 @@ import { GraphData, GraphNode, fetchAmplifications, fetchRecentPosts } from './s
 import { analyzeNetwork, analyzeDeepNarrative, DeepAnalysisResult, askSleuthAssistant } from './services/gemini';
 import { calculateCentrality } from './utils/analysis';
 import { runForensics, ForensicsResults } from './utils/forensics';
+import { saveScanToHistory, getHistory, compareScans, ScanComparison, ScanHistoryEntry } from './utils/history';
 
 // Components
 import Header from './components/Header';
@@ -34,6 +35,8 @@ export default function App() {
   const [forensics, setForensics] = useState<ForensicsResults | null>(null);
   const [deepAnalysis, setDeepAnalysis] = useState<DeepAnalysisResult | null>(null);
   const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
+  const [comparison, setComparison] = useState<ScanComparison | null>(null);
+  const [previousScan, setPreviousScan] = useState<ScanHistoryEntry | null>(null);
   
   // Chat Assistant State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -139,6 +142,25 @@ export default function App() {
       const forensicResults = runForensics(data);
       setForensics(forensicResults);
 
+      // Check for history comparison
+      const history = getHistory();
+      const prev = history.find(h => h.handle === handleToRun.trim());
+      if (prev) {
+        const currentEntry: ScanHistoryEntry = {
+          id: 'current',
+          handle: handleToRun.trim(),
+          timestamp: new Date().toISOString(),
+          nodes: data.nodes.reduce((acc, n) => ({ ...acc, [n.id]: { weight: n.weight, toxicity: n.toxicity || 0 } }), {}),
+          forensics: forensicResults,
+          narrativeSummary: null
+        };
+        setComparison(compareScans(prev, currentEntry));
+        setPreviousScan(prev);
+      } else {
+        setComparison(null);
+        setPreviousScan(null);
+      }
+
       // Flag nodes in state
       const forensicNodes = data.nodes.map(n => ({
         ...n,
@@ -236,6 +258,18 @@ export default function App() {
     runAnalysis('niusde.bsky.social');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleSaveSnapshot = () => {
+    if (!graphData || !forensics) return;
+    saveScanToHistory(handleInput, graphData.nodes, forensics, narrativeSummary);
+    // Refresh comparison if we just saved the first one
+    if (!previousScan) {
+      const history = getHistory();
+      const prev = history.find(h => h.handle === handleInput.trim());
+      if (prev) setPreviousScan(prev);
+    }
+    alert("Snapshot erfolgreich in der lokalen Historie gespeichert.");
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -388,6 +422,9 @@ export default function App() {
           onExportDossier={handleExportDossier}
           deepAnalysis={deepAnalysis}
           isDeepAnalyzing={isDeepAnalyzing}
+          comparison={comparison}
+          oldTimestamp={previousScan?.timestamp || null}
+          onSaveSnapshot={handleSaveSnapshot}
         />
       </main>
 

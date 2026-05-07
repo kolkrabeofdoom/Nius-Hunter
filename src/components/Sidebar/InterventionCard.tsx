@@ -1,4 +1,4 @@
-import { ShieldAlert, HelpCircle, Ban, Download, FileText } from 'lucide-react';
+import { ShieldAlert, HelpCircle, Ban, Download, FileText, History } from 'lucide-react';
 import { GraphData, GraphNode } from '../../services/bsky';
 
 interface InterventionCardProps {
@@ -10,6 +10,7 @@ interface InterventionCardProps {
   onExportBlocklist: () => void;
   onExportDossier: () => void;
   onHelpClick: (id: string) => void;
+  onSaveSnapshot: () => void;
 }
 
 export default function InterventionCard({
@@ -20,7 +21,8 @@ export default function InterventionCard({
   onRemoveBlock,
   onExportBlocklist,
   onExportDossier,
-  onHelpClick
+  onHelpClick,
+  onSaveSnapshot
 }: InterventionCardProps) {
   return (
     <div className="bg-cyber-dark rounded-2xl border border-slate-800 p-5 shadow-2xl relative overflow-hidden">
@@ -100,6 +102,14 @@ export default function InterventionCard({
           className="w-full py-3 bg-neon-blue hover:bg-white text-cyber-black rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,242,255,0.3)] disabled:opacity-50"
         >
           <FileText className="w-4 h-4" /> Export PDF Dossier
+        </button>
+
+        <button 
+          onClick={onSaveSnapshot}
+          disabled={!graphData}
+          className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-neon-blue rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-3 border border-neon-blue/30 disabled:opacity-50"
+        >
+          <History className="w-4 h-4" /> Save Snapshot for Tracking
         </button>
       </div>
     </div>
