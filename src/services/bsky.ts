@@ -18,6 +18,8 @@ export interface GraphNode extends d3.SimulationNodeDatum {
   isCoordinated?: boolean; // Flagged by synchronicity detector
   isSockpuppet?: boolean; // Flagged by metadata similarity
   followersCount?: number;
+  followsCount?: number;
+  postsCount?: number;
 }
 
 export interface GraphEdge extends d3.SimulationLinkDatum<GraphNode> {
@@ -67,6 +69,8 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
         repostTimes: [],
         links: bioLinks,
         followersCount: profile.followersCount || 0,
+        followsCount: profile.followsCount || 0,
+        postsCount: profile.postsCount || 0,
       });
     } else if (isRoot) {
       nodes.get(profile.did)!.isRoot = true;
