@@ -1,4 +1,4 @@
-import { ShieldAlert, HelpCircle, Ban, Download, FileText, History } from 'lucide-react';
+import { ShieldAlert, HelpCircle, Ban, Download, FileText, History, ExternalLink } from 'lucide-react';
 import { GraphData, GraphNode } from '../../services/bsky';
 
 interface InterventionCardProps {
@@ -8,6 +8,7 @@ interface InterventionCardProps {
   topAmplifier: GraphNode | null;
   onRemoveBlock: (id: string) => void;
   onExportBlocklist: () => void;
+  onViewBlocklist: () => void;
   onExportDossier: () => void;
   onHelpClick: (id: string) => void;
   onSaveSnapshot: () => void;
@@ -20,6 +21,7 @@ export default function InterventionCard({
   topAmplifier,
   onRemoveBlock,
   onExportBlocklist,
+  onViewBlocklist,
   onExportDossier,
   onHelpClick,
   onSaveSnapshot
@@ -73,13 +75,22 @@ export default function InterventionCard({
       </div>
 
       <div className="flex flex-col gap-2">
-        <button 
-          onClick={onExportBlocklist}
-          disabled={!graphData}
-          className="w-full py-3 bg-slate-100 hover:bg-white text-cyber-black rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-lg disabled:opacity-50"
-        >
-          <Download className="w-4 h-4" /> Export Blocklist (.txt)
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={onExportBlocklist}
+            disabled={!graphData}
+            className="w-full py-3 bg-slate-100 hover:bg-white text-cyber-black rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-lg disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" /> Export (.txt)
+          </button>
+          <button 
+            onClick={onViewBlocklist}
+            disabled={!graphData}
+            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-neon-green rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-3 border border-neon-green/30 disabled:opacity-50"
+          >
+            <ExternalLink className="w-4 h-4" /> View
+          </button>
+        </div>
         
         <button 
           onClick={onExportDossier}

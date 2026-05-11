@@ -5,10 +5,11 @@ import ForensicsDetailOverlay from '../ForensicsDetailOverlay';
 
 interface ForensicsCardProps {
   forensics: ForensicsResults | null;
+  graphData: any | null;
   onHelpClick: (id: string) => void;
 }
 
-export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardProps) {
+export default function ForensicsCard({ forensics, graphData, onHelpClick }: ForensicsCardProps) {
   const [showDetail, setShowDetail] = useState(false);
 
   return (
@@ -174,6 +175,7 @@ export default function ForensicsCard({ forensics, onHelpClick }: ForensicsCardP
       {showDetail && (
         <ForensicsDetailOverlay 
           forensics={forensics} 
+          graphData={graphData}
           onClose={() => setShowDetail(false)} 
         />
       )}

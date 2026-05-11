@@ -98,12 +98,33 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
 
     onProgress?.("Lade Follower des Accounts...");
     try {
-      // First, get followers of the central account
-      const followersRes = await agent.api.app.bsky.graph.getFollowers({ actor: rootDid, limit: deepScan ? 150 : 50 });
-      for (const f of followersRes.data.followers) {
-        addNode(f, false, 2);
-        addEdge(f.did, rootDid, 1);
-      }
+      let cursor: string | undefined;
+      let totalFetched = 0;
+      const maxFollowers = 10000; // Safety cap
+
+      do {
+        const followersRes = await agent.api.app.bsky.graph.getFollowers({ 
+          actor: rootDid, 
+          limit: 100, 
+          cursor 
+        });
+        
+        for (const f of followersRes.data.followers) {
+          addNode(f, false, 2);
+          addEdge(f.did, rootDid, 1);
+        }
+        
+        totalFetched += followersRes.data.followers.length;
+        cursor = followersRes.data.cursor;
+        onProgress?.(`Lade Follower (${totalFetched}/${rootProfile.followersCount || '?'})...`);
+        
+        // Rate limit mitigation
+        if (cursor && totalFetched % 500 === 0) {
+          await new Promise(r => setTimeout(r, 500));
+        }
+
+      } while (cursor && totalFetched < maxFollowers);
+      
     } catch(e) {
       console.warn("Could not fetch followers", e);
     }
@@ -142,18 +163,23 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
       console.warn("Could not fetch amplifiers", e);
     }
 
-    const allDids = Array.from(nodes.keys()).filter(d => d !== rootDid);
+    // INTERNAL NETWORK ANALYSIS
+    // For large graphs, we only check internal connections for the top N nodes to avoid 429 errors
+    const sortedNodes = Array.from(nodes.values())
+      .filter(d => d.id !== rootDid)
+      .sort((a, b) => b.weight - a.weight);
 
-    onProgress?.("Prüfe Netzwerk der Follower untereinander...");
+    const relevantDids = sortedNodes.slice(0, deepScan ? 400 : 150).map(n => n.id);
+
+    onProgress?.(`Analysiere internes Netzwerk (${relevantDids.length} Fokus-Knoten)...`);
     
     // Chunk requests to avoid rate limits
-    // For each follower, we check who they follow and if it's someone in our current graph
     const chunkSize = 8;
-    for (let i = 0; i < allDids.length; i += chunkSize) {
-      const chunk = allDids.slice(i, i + chunkSize);
+    for (let i = 0; i < relevantDids.length; i += chunkSize) {
+      const chunk = relevantDids.slice(i, i + chunkSize);
       await Promise.all(chunk.map(async (targetDid) => {
         try {
-          const follows = await agent.api.app.bsky.graph.getFollows({ actor: targetDid, limit: deepScan ? 200 : 80 });
+          const follows = await agent.api.app.bsky.graph.getFollows({ actor: targetDid, limit: 100 });
           for (const follow of follows.data.follows) {
             if (nodes.has(follow.did) && follow.did !== rootDid && follow.did !== targetDid) {
               addEdge(targetDid, follow.did, 2); // Internal network edge!
@@ -163,7 +189,7 @@ export async function fetchAmplifications(did: string, deepScan: boolean = false
           // skip on errors
         }
       }));
-      onProgress?.(`Verbindungen werden analysiert (${Math.min(i + chunkSize, allDids.length)}/${allDids.length})...`);
+      onProgress?.(`Verbindungen werden analysiert (${Math.min(i + chunkSize, relevantDids.length)}/${relevantDids.length})...`);
     }
 
     onProgress?.("Netzwerk fertigstellen...");

@@ -131,33 +131,34 @@ export function runForensics(data: GraphData): ForensicsResults {
     // 4.3 Freq_Index (0.2)
     let freqIndex = 0;
     const entropyScore = analyzeHandleEntropy(node.handle);
-    if (entropyScore > 50) freqIndex += 40; 
+    if (entropyScore > 40) freqIndex += 35; // Lower threshold for entropy
     
-    // Profile Completeness
-    if (!node.avatar) freqIndex += 15;
-    if (!node.description || node.description.length < 10) freqIndex += 10;
+    // Profile Completeness - AGGRESSIVE
+    if (!node.avatar) freqIndex += 25;
+    if (!node.description || node.description.length < 5) freqIndex += 20;
     
     // Ratios
     const follows = node.followsCount || 0;
     const followers = node.followersCount || 0;
-    if (follows > 200 && followers < 10) freqIndex += 25;
-    if (followers > 0 && (followers / (follows || 1)) < 0.02) freqIndex += 20;
+    if (follows > 100 && followers < 5) freqIndex += 30;
+    if (followers > 0 && (followers / (follows || 1)) < 0.05) freqIndex += 25;
     
-    // Activity
-    if (node.postsCount !== undefined && node.postsCount < 3) freqIndex += 20;
+    // Activity - HIGH WEIGHT FOR LURKERS
+    if (node.postsCount !== undefined && node.postsCount === 0) freqIndex += 45;
+    else if (node.postsCount !== undefined && node.postsCount < 5) freqIndex += 25;
     
-    if (node.isBotCandidate) freqIndex += 20;
-    score += Math.min(100, freqIndex) * 0.2;
+    if (node.isBotCandidate) freqIndex += 30;
+    score += Math.min(100, freqIndex) * 0.25; // Increased weight
 
-    // 4.4 Fingerprint_Index (0.2) - Domain & Server analysis
+    // 4.4 Fingerprint_Index (0.15)
     let fingerprintIndex = 0;
     const hasSharedDomain = fingerprintClusters.some(c => c.nodeIds.includes(node.id));
     const isPartOfBatch = batchCreationGroups.some(g => g.nodeIds.includes(node.id));
     const isCustomPDS = !node.handle.endsWith('.bsky.social');
     
-    if (hasSharedDomain) fingerprintIndex += 40;
-    if (isPartOfBatch) fingerprintIndex += 40;
-    if (isCustomPDS) fingerprintIndex += 20; // Slight suspicion for custom domains in clusters
+    if (hasSharedDomain) fingerprintIndex += 50;
+    if (isPartOfBatch) fingerprintIndex += 60; // Huge weight for batch creation
+    if (isCustomPDS) fingerprintIndex += 20;
     
     score += Math.min(100, fingerprintIndex) * 0.2;
     
@@ -168,8 +169,8 @@ export function runForensics(data: GraphData): ForensicsResults {
     ? nodeScores.reduce((acc, s) => acc + s, 0) / nodeScores.length 
     : 0;
 
-  // Identify nodes with high probability as bots
-  const botCount = nodeScores.filter(score => score > 65).length;
+  // Identify nodes with probability as bots - AGGRESSIVE THRESHOLD (40 instead of 65)
+  const botCount = nodeScores.filter(score => score > 40).length;
   const botDensity = (botCount / data.nodes.length) * 100;
 
   const totalReach = data.nodes.reduce((acc, n) => acc + (n.followersCount || 0), 0);

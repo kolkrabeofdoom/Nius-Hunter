@@ -25,6 +25,8 @@ import MultipliersCard from './components/Sidebar/MultipliersCard';
 import DeepAnalysisCard from './components/Sidebar/DeepAnalysisCard';
 import InterventionCard from './components/Sidebar/InterventionCard';
 import NodeDetailCard from './components/Sidebar/NodeDetailCard';
+import FollowerGrowthCard from './components/Sidebar/FollowerGrowthCard';
+
 
 import { History, Layers, Cpu, Zap, Brain, ShieldAlert } from 'lucide-react';
 
@@ -366,6 +368,36 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  const handleViewBlocklist = () => {
+    if (!filteredGraphData) return;
+    const text = filteredGraphData.nodes
+      .filter(n => !n.isRoot)
+      .sort((a, b) => b.weight - a.weight)
+      .map(n => n.handle)
+      .join('\n');
+      
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>Blocklist: ${handleInput}</title>
+            <style>
+              body { background: #0c111d; color: #39ff14; font-family: 'JetBrains Mono', monospace; padding: 40px; margin: 0; }
+              pre { font-size: 14px; line-height: 1.6; }
+              .header { border-bottom: 1px solid #1e293b; padding-bottom: 20px; margin-bottom: 20px; opacity: 0.5; font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; }
+            </style>
+          </head>
+          <body>
+            <div class="header">Nius Hunter // Blocklist Export // Target: @${handleInput}</div>
+            <pre>${text}</pre>
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    }
+  };
+
   const handleExportDossier = () => {
     window.print();
   };
@@ -492,6 +524,7 @@ export default function App() {
                     topAmplifier={topAmplifiers && topAmplifiers.length > 0 ? topAmplifiers[0] : null}
                     onRemoveBlock={(id) => setBlockedNodeIds(prev => prev.filter(p => p !== id))}
                     onExportBlocklist={handleExportBlocklist}
+                    onViewBlocklist={handleViewBlocklist}
                     onExportDossier={handleExportDossier}
                     onHelpClick={setActiveHelp}
                     onSaveSnapshot={handleSaveSnapshot}
@@ -563,9 +596,15 @@ export default function App() {
             >
               <ForensicsCard 
                 forensics={forensics} 
+                graphData={graphData}
                 onHelpClick={setActiveHelp} 
               />
+              <FollowerGrowthCard 
+                graphData={graphData} 
+                isLoading={isLoading} 
+              />
             </CollapsibleCard>
+
 
             <CollapsibleCard 
               title="Top Multiplikatoren" 

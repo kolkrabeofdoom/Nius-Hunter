@@ -5,10 +5,11 @@ import { ForensicsResults } from '../utils/forensics';
 
 interface ForensicsDetailOverlayProps {
   forensics: ForensicsResults | null;
+  graphData: any | null;
   onClose: () => void;
 }
 
-export default function ForensicsDetailOverlay({ forensics, onClose }: ForensicsDetailOverlayProps) {
+export default function ForensicsDetailOverlay({ forensics, graphData, onClose }: ForensicsDetailOverlayProps) {
   if (!forensics) return null;
 
   const scoreLabels = [
@@ -164,10 +165,28 @@ export default function ForensicsDetailOverlay({ forensics, onClose }: Forensics
                   In Kombination mit einem durchschnittlichen Suspect-Score von <span className="text-white font-bold">{forensics.avgSuspectScore.toFixed(1)}</span>
                   deutet dies auf eine signifikante Infiltrierung durch künstliche Verstärker hin.
                 </p>
-                <p>
-                  Besonders kritisch ist die <span className="text-neon-purple font-bold">Sockpuppen-Erkennung</span>: Es wurden {forensics.sockpuppetGroups.length} Gruppen 
-                  identifiziert, die mit hoher Wahrscheinlichkeit von derselben Instanz betrieben werden.
-                </p>
+                <div className="space-y-4">
+                  <h5 className="text-[10px] font-black uppercase text-neon-purple flex items-center gap-2">
+                    <Users className="w-3 h-3" /> Identifizierte Sockenpuppen ({forensics.sockpuppetGroups.length})
+                  </h5>
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    {forensics.sockpuppetGroups.map((group, gIdx) => (
+                      <div key={gIdx} className="p-3 bg-neon-purple/5 border border-neon-purple/20 rounded-xl space-y-2">
+                        <div className="text-[8px] font-black text-neon-purple/60 uppercase">Gruppe #{gIdx + 1} (Hohe Ähnlichkeit)</div>
+                        <div className="flex flex-wrap gap-2">
+                          {group.map(id => {
+                            const node = graphData?.nodes.find((n: any) => n.id === id);
+                            return (
+                              <span key={id} className="px-2 py-1 bg-cyber-black/50 border border-slate-800 rounded text-[9px] font-mono text-slate-400">
+                                @{node?.handle || id.slice(0, 12)}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="space-y-4 p-5 bg-cyber-black/50 rounded-2xl border border-slate-800/50">
                 <h5 className="text-[10px] font-black uppercase text-neon-blue mb-2">Empfohlene Strategie</h5>
